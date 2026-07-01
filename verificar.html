@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Verificar Marquesinas · Galicia</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:#0a0a0f;color:#e0e0e0;overflow:hidden;height:100vh;display:flex;flex-direction:column}
+
+#header{position:sticky;top:0;z-index:100;background:#111118;border-bottom:1px solid #1e1e2e;padding:8px 16px;display:flex;align-items:center;gap:12px;flex-shrink:0}
+#header h1{font-size:15px;font-weight:600;color:#00f5ff;white-space:nowrap}
+#stats{font-size:11px;color:rgba(255,255,255,0.4);white-space:nowrap}
+#stats b{color:#fff}
+
+#filters{display:flex;gap:5px;flex-wrap:wrap;margin-left:auto}
+.fbtn{background:#1a1a2e;border:1px solid #2a2a3e;border-radius:5px;color:#777;font-size:10px;padding:3px 8px;cursor:pointer;transition:all .15s;white-space:nowrap}
+.fbtn:hover{border-color:#00f5ff;color:#ccc}
+.fbtn.active{background:#00f5ff18;border-color:#00f5ff;color:#00f5ff}
+.fbtn.kept.active{background:#22c55e18;border-color:#22c55e;color:#22c55e}
+.fbtn.removed.active{background:#ff006e18;border-color:#ff006e;color:#ff006e}
+
+#count-bar{background:#0d0d15;border-bottom:1px solid #1a1a2e;padding:4px 16px;font-size:11px;color:#555;flex-shrink:0;display:flex;justify-content:space-between;align-items:center}
+#count-bar .type-counts{display:flex;gap:8px}
+
+#table-wrap{flex:1;overflow-y:auto;scroll-behavior:smooth}
+#table-wrap::-webkit-scrollbar{width:5px}
+#table-wrap::-webkit-scrollbar-track{background:#0a0a0f}
+#table-wrap::-webkit-scrollbar-thumb{background:#333;border-radius:3px}
+
+.card{display:grid;grid-template-columns:280px 1fr 80px;grid-template-rows:auto;gap:0;border-bottom:2px solid #222;min-height:calc(100vh - 100px);transition:background .2s;cursor:pointer}
+.card:hover{background:rgba(255,255,255,0.02)}
+.card.kept{border-left:4px solid #22c55e}
+.card.removed{border-left:4px solid #ff006e}
+.card.selected{background:rgba(0,245,255,0.04);box-shadow:inset 0 0 0 1px rgba(0,245,255,0.15)}
+
+.card-num{display:none}
+
+.card-info{padding:14px 16px;display:flex;flex-direction:column;gap:6px;align-self:start}
+.card-info .name{font-size:17px;font-weight:700;color:#eee;line-height:1.3}
+.card-info .coords{font-size:12px;color:#888;font-family:'JetBrains Mono',monospace}
+.card-info .type-badge{display:inline-block;width:fit-content;font-size:11px;padding:3px 10px;border-radius:4px;border:1px solid}
+.card-info .gmlink{font-size:12px;color:#00f5ff;text-decoration:none}
+.card-info .gmlink:hover{text-decoration:underline}
+
+.card-sv{position:relative;overflow:hidden;background:#0d0d12;min-height:calc(100vh - 140px)}
+.card-sv .sv-btn{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;background:rgba(0,0,0,0.5);color:#00f5ff;font-size:16px;font-weight:600;transition:background .2s;gap:6px}
+.card-sv .sv-btn:hover{background:rgba(0,0,0,0.3)}
+.card-sv .sv-btn small{font-size:11px;color:#888}
+.card-sv iframe{width:100%;height:100%;border:0}
+
+.card-actions{display:flex;flex-direction:column;gap:5px;padding:12px 8px;justify-content:center}
+.btn{border:1px solid;border-radius:6px;font-size:14px;font-weight:600;padding:12px 6px;cursor:pointer;transition:all .15s;text-align:center;background:0}
+.btn-k{border-color:#22c55e;color:#22c55e}
+.btn-k:hover{background:#22c55e22}
+.btn-k.on{background:#22c55e;color:#000}
+.btn-r{border-color:#ff006e;color:#ff006e}
+.btn-r:hover{background:#ff006e22}
+.btn-r.on{background:#ff006e;color:#fff}
+.btn-u{border-color:#444;color:#444;font-size:11px;padding:8px 4px;margin-top:4px}
+.btn-u:hover{border-color:#888;color:#888}
+
+.card-notes{margin-top:6px}
+.card-notes textarea{width:100%;height:64px;background:#0d0d15;border:1px solid #2a2a3e;border-radius:5px;color:#ddd;font-size:13px;font-family:'Inter',sans-serif;padding:8px 10px;resize:vertical;line-height:1.5}
+.card-notes textarea:focus{border-color:#00f5ff;outline:none;box-shadow:0 0 0 2px rgba(0,245,255,0.15)}
+.card-notes textarea::placeholder{color:#555;font-style:italic}
+.card-notes .save-hint{font-size:9px;color:#444;margin-top:3px}
+
+#loading{display:flex;align-items:center;justify-content:center;height:60vh;font-size:13px;color:#555}
+.spin{animation:spin 1s linear infinite;margin-right:8px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+#kb{position:fixed;bottom:8px;left:50%;transform:translateX(-50%);background:#111118;border:1px solid #1e1e2e;border-radius:6px;padding:4px 12px;font-size:9px;color:#444;z-index:200;white-space:nowrap}
+#kb kbd{background:#1a1a2e;border:1px solid #2a2a3e;border-radius:2px;padding:0 4px;font-size:9px;color:#777}
+
+@media(max-width:900px){
+  .card{grid-template-columns:1fr;min-height:auto}
+  .card-sv{min-height:50vh}
+  .card-actions{flex-direction:row}
+  #filters{gap:3px}
+  .fbtn{font-size:9px;padding:2px 5px}
+}
+</style>
+</head>
+<body>
+
+<div id="header">
+  <h1>🔍 Verificar Marquesinas</h1>
+  <div id="stats">Cargando...</div>
+  <div id="filters">
+    <button class="fbtn active" data-f="pending">⏳ Pendientes</button>
+    <button class="fbtn kept" data-f="kept">✅ Mantenidos</button>
+    <button class="fbtn removed" data-f="removed">❌ Quitados</button>
+    <span style="width:1px;background:#222;margin:0 2px"></span>
+    <button class="fbtn" data-t="M">🚌 Metálica</button>
+    <button class="fbtn" data-t="C">🏠 Cerrada</button>
+    <button class="fbtn" data-t="X">🏛️ Xunta</button>
+    <button class="fbtn" data-t="P">🪧 Poste m.</button>
+    <button class="fbtn" data-t="S">📍 Poste s.</button>
+    <button class="fbtn" data-t="R">🌲 Rural</button>
+  </div>
+</div>
+
+<div id="count-bar">
+  <span id="shown-count">0 puntos</span>
+  <span class="type-counts" id="type-counts"></span>
+</div>
+
+<div id="table-wrap">
+  <div id="loading"><span class="spin">⏳</span> Cargando 20.009 puntos...</div>
+</div>
+
+<div id="kb"><kbd>↑</kbd><kbd>↓</kbd> Navegar &nbsp; <kbd>K</kbd> Mantener &nbsp; <kbd>X</kbd> Quitar &nbsp; <kbd>U</kbd> Deshacer &nbsp; <kbd>N</kbd> Notas</div>
+
+<script>
+const API = 'api.php';
+
+// --- State ---
+let stops = [];
+let meta = {};
+let decisions = {};
+let notesMap = {};  // stop_id → notes string
+let filter = 'pending';
+let typeFilter = null;
+let selIdx = -1;
+let svLoaded = new Set();
+let currentPage = 0;
+const PAGE_SIZE = 1;
+
+// --- Init ---
+async function init() {
+  const [data, dec] = await Promise.all([
+    fetch('stops_light.json').then(r => r.json()),
+    fetch(`${API}?action=get`).then(r => r.json()).catch(() => ({kept:[],removed:[]}))
+  ]);
+
+  meta = data.m;
+  const typeLabels = meta.labels;
+  const typeColors = meta.colors;
+  const typeIcons = meta.icons;
+
+  stops = data.s.map(s => ({
+    id: 'stop_' + s[0],
+    num: s[0],
+    name: s[1],
+    type: s[2],
+    lat: s[3] / 1e6,
+    lng: s[4] / 1e6,
+    label: typeLabels[s[2]] || s[2],
+    color: typeColors[s[2]] || '#888',
+    icon: typeIcons[s[2]] || '❓',
+  }));
+
+  if (dec.kept) dec.kept.forEach(d => {
+    decisions[d.stop_id] = 'kept';
+    if (d.notes) notesMap[d.stop_id] = d.notes;
+  });
+  if (dec.removed) dec.removed.forEach(d => {
+    decisions[d.stop_id] = 'removed';
+    if (d.notes) notesMap[d.stop_id] = d.notes;
+  });
+
+  render();
+}
+
+function getVisible() {
+  return stops.filter(s => {
+    const d = decisions[s.id];
+    if (filter === 'pending' && d) return false;
+    if (filter === 'kept' && d !== 'kept') return false;
+    if (filter === 'removed' && d !== 'removed') return false;
+    if (typeFilter && s.type !== typeFilter) return false;
+    return true;
+  });
+}
+
+function updateStats() {
+  const k = Object.values(decisions).filter(d => d === 'kept').length;
+  const r = Object.values(decisions).filter(d => d === 'removed').length;
+  const p = stops.length - k - r;
+  document.getElementById('stats').innerHTML = `<b>${p}</b> pend · <b style="color:#22c55e">${k}</b> ✓ · <b style="color:#ff006e">${r}</b> ✗ · <b>${stops.length}</b> total`;
+}
+
+function escHtml(s) {
+  const d = document.createElement('div');
+  d.textContent = s || '';
+  return d.innerHTML;
+}
+
+function render() {
+  updateStats();
+  const vis = getVisible();
+  document.getElementById('shown-count').textContent = `${vis.length} puntos`;
+
+  const tc = {};
+  vis.forEach(s => { tc[s.type] = (tc[s.type] || 0) + 1; });
+  const tcEl = document.getElementById('type-counts');
+  tcEl.innerHTML = Object.entries(tc).map(([t,c]) =>
+    `<span style="color:${meta.colors[t]||'#888'}">${meta.icons[t]||''} ${c}</span>`
+  ).join('');
+
+  const wrap = document.getElementById('table-wrap');
+
+  if (vis.length === 0) {
+    wrap.innerHTML = '<div id="loading">No hay puntos con este filtro 🎉</div>';
+    return;
+  }
+
+  // Paginated rendering
+  const totalPages = Math.ceil(vis.length / PAGE_SIZE);
+  const start = currentPage * PAGE_SIZE;
+  const batch = vis.slice(start, start + PAGE_SIZE);
+
+  let html = '';
+  batch.forEach((s, i) => {
+    const globalIdx = start + i;
+    const d = decisions[s.id];
+    const cls = d === 'kept' ? 'kept' : d === 'removed' ? 'removed' : '';
+    const existingNotes = escHtml(notesMap[s.id] || '');
+
+    // Build Street View embed URL (no API key needed for embed)
+    const svUrl = `https://maps.google.com/maps?layer=c&cbll=${s.lat},${s.lng}&cbp=11,0,0,0,0&output=svembed`;
+
+    html += `<div class="card ${cls}" data-sid="${s.id}" data-idx="${globalIdx}" id="c${globalIdx}">
+      <div class="card-info">
+        <div class="name">${s.icon} ${escHtml(s.name) || 'Sin nombre'}</div>
+        <div class="coords">${s.lat.toFixed(6)}, ${s.lng.toFixed(6)}</div>
+        <div class="type-badge" style="color:${s.color};border-color:${s.color}">${s.label}</div>
+        <a class="gmlink" href="https://www.google.com/maps/@${s.lat},${s.lng},3a,75y,0h,90t/data=!3m6!1e1!3m4!1sAFzm0B0!2e0!7i16384!8i8192" target="_blank" rel="noopener">Abrir en Google Maps ↗</a>
+        <div class="card-notes">
+          <textarea id="n${globalIdx}" placeholder="Observaciones..." data-sid="${s.id}" onclick="event.stopPropagation()">${existingNotes}</textarea>
+        </div>
+      </div>
+      <div class="card-sv" id="sv${globalIdx}" data-lat="${s.lat}" data-lng="${s.lng}">
+      </div>
+      <div class="card-actions">
+        <button class="btn btn-k ${d==='kept'?'on':''}" onclick="decide('${s.id}','kept',${globalIdx})">✓ Mantener</button>
+        <button class="btn btn-r ${d==='removed'?'on':''}" onclick="decide('${s.id}','removed',${globalIdx})">✗ Quitar</button>
+        ${d ? `<button class="btn btn-u" onclick="undo('${s.id}',${globalIdx})">↩ Deshacer</button>` : ''}
+      </div>
+    </div>`;
+  });
+
+  // Pagination controls
+  html += `<div style="display:flex;justify-content:center;gap:12px;padding:16px;align-items:center">
+    <button onclick="goPage(-1)" ${currentPage === 0 ? 'disabled' : ''} style="background:#1a1a2e;border:1px solid #2a2a3e;color:#777;padding:6px 16px;border-radius:5px;cursor:pointer">← Anterior</button>
+    <span style="color:#555;font-size:12px">Página ${currentPage+1} de ${totalPages} (${vis.length} puntos)</span>
+    <button onclick="goPage(1)" ${currentPage >= totalPages-1 ? 'disabled' : ''} style="background:#1a1a2e;border:1px solid #2a2a3e;color:#777;padding:6px 16px;border-radius:5px;cursor:pointer">Siguiente →</button>
+  </div>`;
+
+  wrap.innerHTML = html;
+
+  // Auto-load Street View for all cards on page
+  setTimeout(() => {
+    batch.forEach((s, i) => {
+      const globalIdx = start + i;
+      if (!svLoaded.has(globalIdx)) activateSV(globalIdx);
+    });
+  }, 300);
+
+  // Attach auto-save on blur for all textarea notes
+  wrap.querySelectorAll('textarea[data-sid]').forEach(ta => {
+    ta.addEventListener('blur', () => saveNotes(ta.dataset.sid, ta.value));
+    ta.addEventListener('keydown', e => {
+      // Don't trigger card navigation when typing notes
+      e.stopPropagation();
+    });
+    ta.addEventListener('focus', () => {
+      // Mark this card as selected when notes get focus
+      const card = ta.closest('.card');
+      if (card) {
+        document.querySelectorAll('.card.selected').forEach(el => el.classList.remove('selected'));
+        card.classList.add('selected');
+        selIdx = parseInt(card.dataset.idx);
+      }
+    });
+  });
+}
+
+function goPage(dir) {
+  const vis = getVisible();
+  const totalPages = Math.ceil(vis.length / PAGE_SIZE);
+  currentPage = Math.max(0, Math.min(totalPages - 1, currentPage + dir));
+  selIdx = currentPage * PAGE_SIZE;
+  svLoaded.clear();
+  render();
+  document.getElementById('table-wrap').scrollTop = 0;
+}
+
+function activateSV(idx) {
+  const el = document.getElementById(`sv${idx}`);
+  if (!el || svLoaded.has(idx)) return;
+
+  const lat = el.dataset.lat;
+  const lng = el.dataset.lng;
+  if (!lat || !lng) return;
+
+  const iframe = document.createElement('iframe');
+  iframe.src = `https://maps.google.com/maps?layer=c&cbll=${lat},${lng}&cbp=11,0,0,0,0&output=svembed`;
+  iframe.allow = 'accelerometer; gyroscope';
+  iframe.style.cssText = 'width:100%;height:100%;border:0;';
+  el.appendChild(iframe);
+  svLoaded.add(idx);
+}
+
+async function decide(sid, dec, i) {
+  const s = stops.find(x => x.id === sid);
+  if (!s) return;
+
+  // Grab current notes from textarea if visible
+  const ta = document.querySelector(`textarea[data-sid="${sid}"]`);
+  const notes = ta ? ta.value : (notesMap[sid] || null);
+
+  try {
+    await fetch(`${API}?action=save`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ stop_id: sid, decision: dec, lat: s.lat, lng: s.lng, name: s.name, notes: notes })
+    });
+  } catch(e) { console.error(e); }
+
+  decisions[sid] = dec;
+  if (notes) notesMap[sid] = notes;
+
+  // In "pending" mode, the decided card disappears from view.
+  // Re-render to show fresh cards, auto-loading their Street Views.
+  if (filter === 'pending') {
+    svLoaded.clear();
+    // Stay on current page — if page is empty, go back
+    const vis = getVisible();
+    const totalPages = Math.ceil(vis.length / PAGE_SIZE);
+    if (currentPage >= totalPages && totalPages > 0) currentPage = totalPages - 1;
+    selIdx = currentPage * PAGE_SIZE;
+    render();
+  } else {
+    render();
+  }
+}
+
+async function saveNotes(sid, notes) {
+  // Only save notes if there's already a decision (kept/removed)
+  const dec = decisions[sid];
+  if (!dec) {
+    // Just store locally until a decision is made
+    if (notes.trim()) notesMap[sid] = notes;
+    else delete notesMap[sid];
+    return;
+  }
+
+  const s = stops.find(x => x.id === sid);
+  if (!s) return;
+
+  try {
+    await fetch(`${API}?action=save`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ stop_id: sid, decision: dec, lat: s.lat, lng: s.lng, name: s.name, notes: notes.trim() || null })
+    });
+  } catch(e) { console.error(e); }
+
+  if (notes.trim()) notesMap[sid] = notes;
+  else delete notesMap[sid];
+}
+
+async function undo(sid, i) {
+  try {
+    await fetch(`${API}?action=delete`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ stop_id: sid })
+    });
+  } catch(e) { console.error(e); }
+
+  delete decisions[sid];
+  // Keep notes locally even after undo, they might re-decide
+  render();
+}
+
+// --- Keyboard ---
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  const vis = getVisible();
+  if (!vis.length) return;
+
+  if (e.key === 'ArrowDown') { e.preventDefault(); selIdx = Math.min(selIdx+1, vis.length-1); scrollTo(selIdx); }
+  else if (e.key === 'ArrowUp') { e.preventDefault(); selIdx = Math.max(selIdx-1, 0); scrollTo(selIdx); }
+  else if ((e.key === 'k' || e.key === 'K') && selIdx >= 0) { decide(vis[selIdx].id, 'kept', selIdx); }
+  else if ((e.key === 'x' || e.key === 'X') && selIdx >= 0) { decide(vis[selIdx].id, 'removed', selIdx); }
+  else if ((e.key === 'u' || e.key === 'U') && selIdx >= 0) { undo(vis[selIdx].id, selIdx); }
+  else if (e.key === 'n' || e.key === 'N') {
+    e.preventDefault();
+    const ta = document.getElementById(`n${selIdx}`);
+    if (ta) ta.focus();
+  }
+  else if (e.key === 'ArrowRight' && currentPage < Math.ceil(vis.length / PAGE_SIZE) - 1) { goPage(1); }
+  else if (e.key === 'ArrowLeft' && currentPage > 0) { goPage(-1); }
+});
+
+function scrollTo(i) {
+  document.querySelectorAll('.card.selected').forEach(el => el.classList.remove('selected'));
+  const el = document.getElementById(`c${i}`);
+  if (el) { el.classList.add('selected'); el.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+}
+
+// --- Filters ---
+document.querySelectorAll('.fbtn[data-f]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.fbtn[data-f]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    filter = btn.dataset.f;
+    currentPage = 0;
+    selIdx = -1;
+    svLoaded.clear();
+    render();
+  });
+});
+
+document.querySelectorAll('.fbtn[data-t]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    if (typeFilter === btn.dataset.t) { btn.classList.remove('active'); typeFilter = null; }
+    else { document.querySelectorAll('.fbtn[data-t]').forEach(b => b.classList.remove('active')); btn.classList.add('active'); typeFilter = btn.dataset.t; }
+    currentPage = 0;
+    selIdx = -1;
+    svLoaded.clear();
+    render();
+  });
+});
+
+init();
+</script>
+</body>
+</html>

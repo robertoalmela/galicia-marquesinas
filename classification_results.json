@@ -1,0 +1,308 @@
+{
+  "date": "2026-05-05",
+  "model": "ollama-cloud/gemma4:31b",
+  "total_stops": 50,
+  "stops": {
+    "0": {
+      "name": "San Martiño",
+      "province": "Pontevedra",
+      "classification": "pending",
+      "directions": {}
+    },
+    "1": {
+      "name": "Empalme De Navalexo",
+      "province": "Pontevedra",
+      "classification": "pending",
+      "directions": {}
+    },
+    "2": {
+      "name": "O Cruceiro",
+      "province": "Pontevedra",
+      "classification": "pending",
+      "directions": {}
+    },
+    "3": {
+      "name": "Salcedo (N-550)",
+      "province": "Pontevedra",
+      "classification": "pending",
+      "directions": {}
+    },
+    "4": {
+      "name": "Avda. de Compostela (A Xunqueira)",
+      "province": "Pontevedra",
+      "classification": "pending",
+      "directions": {}
+    },
+    "5": {
+      "name": "Xofre De Tenorio",
+      "province": "Pontevedra",
+      "classification": "pending",
+      "directions": {}
+    },
+    "6": {
+      "name": "Casal Novo (cruzamento)",
+      "province": "Pontevedra",
+      "classification": "pending",
+      "directions": {}
+    },
+    "7": {
+      "name": "Cimbelo",
+      "province": "Pontevedra",
+      "classification": "pending",
+      "directions": {}
+    },
+    "8": {
+      "name": "Pasarón",
+      "province": "Pontevedra",
+      "classification": "pending",
+      "directions": {}
+    },
+    "9": {
+      "name": "Rua Illa de Tambo cruce r",
+      "province": "Pontevedra",
+      "classification": "pending",
+      "directions": {}
+    },
+    "10": {
+      "name": "Estrada Campaño cruce rua",
+      "province": "Pontevedra",
+      "classification": "pending",
+      "directions": {}
+    },
+    "11": {
+      "name": "Rua Mato Calderón (farmac",
+      "province": "Pontevedra",
+      "classification": "pending",
+      "directions": {}
+    },
+    "12": {
+      "name": "Rua José Pernas cruce rua",
+      "province": "Pontevedra",
+      "classification": "pending",
+      "directions": {}
+    },
+    "13": {
+      "name": "Glorieta A Barca",
+      "province": "Pontevedra",
+      "classification": "pending",
+      "directions": {}
+    },
+    "14": {
+      "name": "Avda. Victoria Moreno (Xunta)",
+      "province": "Pontevedra",
+      "classification": "pending",
+      "directions": {}
+    },
+    "15": {
+      "name": "A Revolta",
+      "province": "A Coruña",
+      "classification": "pending",
+      "directions": {}
+    },
+    "16": {
+      "name": "A Revolta",
+      "province": "A Coruña",
+      "classification": "pending",
+      "directions": {}
+    },
+    "17": {
+      "name": "Italia",
+      "province": "Pontevedra",
+      "classification": "pending",
+      "directions": {}
+    },
+    "18": {
+      "name": "Portugal",
+      "province": "Pontevedra",
+      "classification": "pending",
+      "directions": {}
+    },
+    "19": {
+      "name": "Cerponzóns",
+      "province": "Pontevedra",
+      "classification": "pending",
+      "directions": {}
+    },
+    "20": {
+      "name": "Alba",
+      "province": "Pontevedra",
+      "classification": "pending",
+      "directions": {}
+    },
+    "21": {
+      "name": "Residencia Montecelo",
+      "province": "Pontevedra",
+      "classification": "pending",
+      "directions": {}
+    },
+    "22": {
+      "name": "San Pedro De Tomeza",
+      "province": "Pontevedra",
+      "classification": "pending",
+      "directions": {}
+    },
+    "23": {
+      "name": "Santa María De Xeve",
+      "province": "Pontevedra",
+      "classification": "pending",
+      "directions": {}
+    },
+    "24": {
+      "name": "Transformador (fillos Ant",
+      "province": "Pontevedra",
+      "classification": "pending",
+      "directions": {}
+    },
+    "25": {
+      "name": "Lourizán",
+      "province": "Pontevedra",
+      "classification": "pending",
+      "directions": {}
+    },
+    "26": {
+      "name": "Mollavao",
+      "province": "Pontevedra",
+      "classification": "pending",
+      "directions": {}
+    },
+    "27": {
+      "name": "Mollavao",
+      "province": "Pontevedra",
+      "classification": "pending",
+      "directions": {}
+    },
+    "28": {
+      "name": "Pazos",
+      "province": "Pontevedra",
+      "classification": "pending",
+      "directions": {}
+    },
+    "29": {
+      "name": "A Pedra Picada",
+      "province": "Pontevedra",
+      "classification": "pending",
+      "directions": {}
+    },
+    "30": {
+      "name": "Verducido",
+      "province": "Pontevedra",
+      "classification": "pending",
+      "directions": {}
+    },
+    "31": {
+      "name": "O Casal de Rei",
+      "province": "Pontevedra",
+      "classification": "pending",
+      "directions": {}
+    },
+    "32": {
+      "name": "Casas Novas",
+      "province": "Pontevedra",
+      "classification": "pending",
+      "directions": {}
+    },
+    "33": {
+      "name": "Eiriña",
+      "province": "Pontevedra",
+      "classification": "pending",
+      "directions": {}
+    },
+    "34": {
+      "name": "Eirós",
+      "province": "Pontevedra",
+      "classification": "pending",
+      "directions": {}
+    },
+    "35": {
+      "name": "Fontáns",
+      "province": "Pontevedra",
+      "classification": "pending",
+      "directions": {}
+    },
+    "36": {
+      "name": "O Vao",
+      "province": "Pontevedra",
+      "classification": "pending",
+      "directions": {}
+    },
+    "37": {
+      "name": "Marín",
+      "province": "Pontevedra",
+      "classification": "pending",
+      "directions": {}
+    },
+    "38": {
+      "name": "Vilares",
+      "province": "Pontevedra",
+      "classification": "pending",
+      "directions": {}
+    },
+    "39": {
+      "name": "A cardosa",
+      "province": "Pontevedra",
+      "classification": "pending",
+      "directions": {}
+    },
+    "40": {
+      "name": "Pazos (gasolineira Juviol",
+      "province": "Pontevedra",
+      "classification": "pending",
+      "directions": {}
+    },
+    "41": {
+      "name": "O Marco (cruzamento)",
+      "province": "Pontevedra",
+      "classification": "pending",
+      "directions": {}
+    },
+    "42": {
+      "name": "A Carballeira",
+      "province": "Pontevedra",
+      "classification": "pending",
+      "directions": {}
+    },
+    "43": {
+      "name": "BORDEL",
+      "province": "Pontevedra",
+      "classification": "pending",
+      "directions": {}
+    },
+    "44": {
+      "name": "Avda. de Lugo",
+      "province": "Pontevedra",
+      "classification": "pending",
+      "directions": {}
+    },
+    "45": {
+      "name": "BIKOKA",
+      "province": "Pontevedra",
+      "classification": "pending",
+      "directions": {}
+    },
+    "46": {
+      "name": "CEIP A Carballeira",
+      "province": "Pontevedra",
+      "classification": "pending",
+      "directions": {}
+    },
+    "47": {
+      "name": "O Regueiriño (núcleo)",
+      "province": "Pontevedra",
+      "classification": "pending",
+      "directions": {}
+    },
+    "48": {
+      "name": "O Regueiriño (estrada)",
+      "province": "Pontevedra",
+      "classification": "pending",
+      "directions": {}
+    },
+    "49": {
+      "name": "Estribela-Lonxa",
+      "province": "Pontevedra",
+      "classification": "pending",
+      "directions": {}
+    }
+  },
+  "summary": {}
+}

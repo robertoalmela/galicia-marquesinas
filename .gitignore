@@ -1,2 +1,14 @@
+# Secretos locales
+config_local.py
+
+# Datos pesados (regenerables/descargables)
+street_view/
+sv_4dir/
 gtfs_data/
 gtfs_galicia.zip
+__pycache__/
+
+# Entrega subvencion con datos personales - solo local
+ENTREGA_PROMOARTE_2026_MARQUESINAS/
+ENTREGA_PROMOARTE_2026_MARQUESINAS.zip
+0[123]-Anexo-*.docx

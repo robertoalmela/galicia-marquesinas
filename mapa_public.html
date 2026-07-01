@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Marquesinas de Galicia · Mapa de Paradas de Autobús</title>
+<meta name="description" content="Mapa interactivo de las 26.580 paradas de autobús de Galicia. Proyecto documental fotográfico de Roberto Almela sobre el patrimonio arquitectónico menor gallego.">
+<meta property="og:title" content="Marquesinas de Galicia · Mapa Interactivo">
+<meta property="og:description" content="Explora las 26.580 paradas de autobús de Galicia: tipología, validación y conexión. Proyecto documental de Roberto Almela.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://robertoalmela.com/marquesinas_galicia/mapa.html">
+<meta property="og:image" content="https://robertoalmela.com/marquesinas_galicia/dossier/img/hero-bg.jpg">
+<meta name="theme-color" content="#1e3a8a">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚌</text></svg>">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+<style>
+/* ===== DESIGN TOKENS ===== */
+:root {
+  --bg-deep: #0f172a;
+  --bg-surface: #1e293b;
+  --bg-card: rgba(30,41,59,0.92);
+  --border: rgba(148,163,184,0.12);
+  --border-hover: rgba(59,130,246,0.3);
+  --text-primary: #f1f5f9;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --accent: #3b82f6;
+  --accent-hover: #60a5fa;
+  --accent-glow: rgba(59,130,246,0.15);
+  --accent-cyan: #0ea5e9;
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --headings: Georgia, 'Times New Roman', serif;
+  --body: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --radius: 10px;
+  --radius-lg: 14px;
+}
+
+/* ===== RESET ===== */
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--body);background:var(--bg-deep);color:var(--text-primary);overflow:hidden}
+
+/* ===== MAP ===== */
+#map{position:absolute;top:0;left:0;right:0;bottom:0;z-index:1}
+
+/* ===== LOADING ===== */
+#loading{position:fixed;top:0;left:0;right:0;bottom:0;z-index:99999;background:var(--bg-deep);display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.4s}
+#loading.done{opacity:0;pointer-events:none}
+.loader{width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite;margin-bottom:16px}
+@keyframes spin{to{transform:rotate(360deg)}}
+#loading p{color:var(--text-secondary);font-size:14px}
+
+/* ===== SIDEBAR ===== */
+#sidebar{
+  position:absolute;top:12px;right:12px;z-index:1000;
+  width:340px;max-height:calc(100vh - 24px);
+  overflow-y:auto;overflow-x:hidden;
+  background:var(--bg-card);
+  border:1px solid var(--border);
+  border-radius:var(--radius-lg);
+  backdrop-filter:blur(16px);
+  -webkit-backdrop-filter:blur(16px);
+  padding:0;
+  transition:transform 0.3s cubic-bezier(0.4,0,0.2,1),opacity 0.3s;
+}
+#sidebar.collapsed{transform:translateX(360px);opacity:0;pointer-events:none}
+
+/* Scrollbar */
+#sidebar::-webkit-scrollbar{width:4px}
+#sidebar::-webkit-scrollbar-track{background:transparent}
+#sidebar::-webkit-scrollbar-thumb{background:rgba(148,163,184,0.2);border-radius:2px}
+
+/* ===== HEADER ===== */
+.sidebar-header{
+  padding:20px 20px 16px;
+  background:linear-gradient(135deg,rgba(30,58,138,0.4) 0%,rgba(59,130,246,0.15) 100%);
+  border-bottom:1px solid var(--border);
+  position:sticky;top:0;z-index:10;
+  backdrop-filter:blur(16px);
+}
+.sidebar-header h1{
+  font-family:var(--headings);
+  font-size:20px;font-weight:700;color:var(--text-primary);
+  letter-spacing:-0.01em;line-height:1.2;margin-bottom:2px;
+}
+.sidebar-header .subtitle{
+  font-size:12px;color:var(--accent);font-weight:500;letter-spacing:0.02em;margin-bottom:10px;
+}
+.sidebar-header .project-desc{
+  font-size:13px;color:var(--text-secondary);line-height:1.5;margin-bottom:12px;
+}
+.sidebar-header .author{
+  font-size:11px;color:var(--text-muted);
+}
+.sidebar-header .author a{color:var(--accent);text-decoration:none}
+.sidebar-header .author a:hover{text-decoration:underline}
+
+/* Dossier CTA */
+.cta-dossier{
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  padding:10px 16px;border-radius:8px;
+  background:linear-gradient(135deg,var(--accent),var(--accent-cyan));
+  color:#fff;text-decoration:none;font-weight:600;font-size:13px;
+  letter-spacing:0.01em;
+  transition:transform 0.15s,box-shadow 0.15s;
+  box-shadow:0 2px 12px rgba(59,130,246,0.3);
+}
+.cta-dossier:hover{transform:translateY(-1px);box-shadow:0 4px 20px rgba(59,130,246,0.4)}
+
+/* ===== SECTIONS ===== */
+.sidebar-section{padding:14px 20px;border-bottom:1px solid var(--border)}
+.sidebar-section:last-child{border-bottom:none}
+
+.section-label{
+  font-size:10px;font-weight:700;color:var(--text-muted);
+  text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px;
+}
+
+/* Stats */
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.stat-card{
+  background:rgba(255,255,255,0.03);border:1px solid var(--border);
+  border-radius:8px;padding:10px 12px;
+  transition:border-color 0.2s;
+}
+.stat-card:hover{border-color:var(--border-hover)}
+.stat-card .stat-value{
+  font-size:20px;font-weight:700;color:var(--text-primary);
+  font-variant-numeric:tabular-nums;line-height:1;
+}
+.stat-card .stat-label{font-size:11px;color:var(--text-muted);margin-top:2px}
+.stat-card.accent .stat-value{color:var(--accent)}
+.stat-card.success .stat-value{color:var(--success)}
+.stat-card.warning .stat-value{color:var(--warning)}
+
+/* View Toggle */
+.view-toggle{display:flex;gap:4px;margin-top:4px}
+.view-btn{
+  flex:1;padding:8px 4px;border:1px solid var(--border);border-radius:6px;
+  background:transparent;color:var(--text-secondary);font-size:11px;font-weight:500;
+  cursor:pointer;text-align:center;transition:all 0.15s;
+  font-family:var(--body);
+}
+.view-btn:hover{background:rgba(255,255,255,0.05);color:var(--text-primary)}
+.view-btn.active{background:var(--accent-glow);border-color:var(--accent);color:var(--accent)}
+
+/* Filter buttons */
+.filter-group{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+.filter-btn{
+  padding:6px 10px;border:1px solid var(--border);border-radius:6px;
+  background:transparent;color:var(--text-secondary);font-size:11px;font-weight:500;
+  cursor:pointer;transition:all 0.15s;font-family:var(--body);
+}
+.filter-btn:hover{background:rgba(255,255,255,0.05);color:var(--text-primary)}
+.filter-btn.active{background:var(--accent-glow);border-color:var(--accent);color:var(--accent)}
+
+/* Legend */
+.legend-row{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-secondary);padding:3px 0}
+.legend-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.legend-count{margin-left:auto;color:var(--text-muted);font-size:11px;font-variant-numeric:tabular-nums}
+
+/* ===== FLOATING TOGGLE ===== */
+#sidebar-toggle{
+  position:fixed;top:16px;right:16px;z-index:1001;
+  width:44px;height:44px;border-radius:12px;
+  background:var(--bg-card);border:1px solid var(--border);
+  backdrop-filter:blur(12px);
+  color:var(--text-primary);font-size:20px;
+  cursor:pointer;display:none;align-items:center;justify-content:center;
+  transition:all 0.2s;box-shadow:0 2px 12px rgba(0,0,0,0.3);
+  font-family:var(--body);
+}
+#sidebar-toggle:hover{background:var(--accent-glow);border-color:var(--accent)}
+
+/* ===== FOOTER ===== */
+.sidebar-footer{
+  padding:12px 20px;background:rgba(15,23,42,0.5);
+  border-top:1px solid var(--border);
+}
+.sidebar-footer p{font-size:10px;color:var(--text-muted);line-height:1.5}
+.sidebar-footer a{color:var(--accent);text-decoration:none}
+.sidebar-footer a:hover{text-decoration:underline}
+
+/* ===== POPUPS ===== */
+.leaflet-popup-content-wrapper{
+  background:rgba(15,23,42,0.96);color:var(--text-primary);
+  border-radius:var(--radius);border:1px solid var(--border);
+  box-shadow:0 8px 32px rgba(0,0,0,0.5);padding:0;
+}
+.leaflet-popup-tip{background:rgba(15,23,42,0.96)}
+.leaflet-popup-content{margin:12px 14px;font-size:12px;line-height:1.5;min-width:220px}
+.leaflet-popup-close-button{color:var(--text-muted)!important;font-size:18px!important}
+.leaflet-popup-close-button:hover{color:var(--text-primary)!important}
+
+.popup-title{font-family:var(--headings);font-size:15px;font-weight:700;color:var(--text-primary);margin-bottom:6px}
+.popup-row{color:var(--text-secondary);margin:2px 0;font-size:12px}
+.popup-row a{color:var(--accent);text-decoration:none}
+.popup-row a:hover{text-decoration:underline}
+.popup-actions{display:flex;gap:4px;margin-top:8px;flex-wrap:wrap}
+.popup-btn{
+  display:inline-flex;align-items:center;gap:4px;
+  padding:6px 10px;border-radius:6px;font-size:11px;font-weight:500;
+  text-decoration:none;cursor:pointer;border:none;
+  transition:all 0.15s;font-family:var(--body);
+}
+.popup-btn-maps{background:rgba(59,130,246,0.12);color:var(--accent)}
+.popup-btn-maps:hover{background:rgba(59,130,246,0.2)}
+.popup-btn-sv{background:rgba(16,185,129,0.12);color:var(--success)}
+.popup-btn-sv:hover{background:rgba(16,185,129,0.2)}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+  #sidebar{
+    width:calc(100vw - 24px);top:auto;bottom:12px;right:12px;left:12px;
+    max-height:55vh;border-radius:var(--radius-lg);
+    transform:translateY(0);
+  }
+  #sidebar.collapsed{transform:translateY(calc(100% + 20px));opacity:0}
+  #sidebar-toggle{display:flex;top:auto;bottom:16px;right:16px}
+  .sidebar-header h1{font-size:17px}
+  .stats-grid{grid-template-columns:1fr 1fr}
+  .stat-card .stat-value{font-size:17px}
+  .view-toggle{flex-wrap:wrap}
+}
+
+@media (max-width: 480px) {
+  #sidebar{width:calc(100vw - 16px);left:8px;right:8px;bottom:8px;max-height:50vh}
+  #sidebar-toggle{bottom:12px;right:12px;width:40px;height:40px;font-size:18px;border-radius:10px}
+  .sidebar-section{padding:10px 14px}
+  .sidebar-header{padding:14px 14px 12px}
+  .sidebar-header h1{font-size:16px}
+  .filter-btn{font-size:10px;padding:5px 8px}
+}
+
+/* ===== PRINT ===== */
+@media print {
+  #sidebar{position:static;width:100%;max-height:none;background:#fff;color:#111;border:none;border-radius:0;backdrop-filter:none}
+  #sidebar.collapsed{transform:none;opacity:1}
+  #map{display:none}
+  .sidebar-header{background:#f1f5f9}
+  .leaflet-control-container{display:none}
+}
+</style>
+</head>
+<body>
+
+<div id="loading">
+  <div class="loader"></div>
+  <p>Cargando 26.580 paradas de Galicia…</p>
+</div>
+
+<div id="map"></div>
+
+<button id="sidebar-toggle" aria-label="Abrir panel" onclick="toggleSidebar()">☰</button>
+
+<div id="sidebar">
+  <!-- HEADER -->
+  <div class="sidebar-header">
+    <h1>Marquesinas de Galicia</h1>
+    <div class="subtitle">Proyecto documental fotográfico</div>
+    <p class="project-desc">Mapa interactivo de las 26.580 paradas de autobús de Galicia. Tipología, validación y conexión con el territorio.</p>
+    <p class="author">Por <a href="https://robertoalmela.com" target="_blank" rel="noopener">Roberto Almela</a></p>
+    <div style="margin-top:12px">
+      <a href="dossier/index.html" target="_blank" rel="noopener" class="cta-dossier">📄 Dossier del proyecto →</a>
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div class="sidebar-section">
+    <div class="section-label">Estadísticas</div>
+    <div class="stats-grid">
+      <div class="stat-card accent">
+        <div class="stat-value">26.580</div>
+        <div class="stat-label">Paradas totales</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="stat-visible">26.580</div>
+        <div class="stat-label">En el mapa</div>
+      </div>
+      <div class="stat-card success">
+        <div class="stat-value">1.220</div>
+        <div class="stat-label">Validadas (OSM)</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">6.581</div>
+        <div class="stat-label">Líneas de bus</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- VIEW -->
+  <div class="sidebar-section">
+    <div class="section-label">Vista del mapa</div>
+    <div class="view-toggle" id="view-toggle">
+      <button class="view-btn active" data-view="shelter">Tipología</button>
+      <button class="view-btn" data-view="province">Provincia</button>
+      <button class="view-btn" data-view="routes">Conexión</button>
+      <button class="view-btn" data-view="validation">Validación</button>
+    </div>
+  </div>
+
+  <!-- SHELTER LEGEND & FILTER -->
+  <div class="sidebar-section" id="section-shelter">
+    <div class="section-label">Tipología de marquesina</div>
+    <div style="margin-bottom:8px">
+      <div class="legend-row"><span class="legend-dot" style="background:#e63946"></span>Moderna Xunta<span class="legend-count">1.213</span></div>
+      <div class="legend-row"><span class="legend-dot" style="background:#f4a261"></span>Cerrada<span class="legend-count">5.712</span></div>
+      <div class="legend-row"><span class="legend-dot" style="background:#2a9d8f"></span>Metálica<span class="legend-count">11.931</span></div>
+      <div class="legend-row"><span class="legend-dot" style="background:#e9c46a"></span>Obra/Piedra<span class="legend-count">—</span></div>
+      <div class="legend-row"><span class="legend-dot" style="background:#457b9d"></span>Poste marcado<span class="legend-count">6.366</span></div>
+      <div class="legend-row"><span class="legend-dot" style="background:#8b5cf6"></span>Poste simple<span class="legend-count">683</span></div>
+      <div class="legend-row"><span class="legend-dot" style="background:#64748b"></span>Poste rural<span class="legend-count">675</span></div>
+    </div>
+    <div class="filter-group" id="shelter-filters">
+      <button class="filter-btn active" data-shelter="all">Todas</button>
+      <button class="filter-btn" data-shelter="moderna_xunta">Moderna</button>
+      <button class="filter-btn" data-shelter="marquesina_cerrada">Cerrada</button>
+      <button class="filter-btn" data-shelter="marquesina_metalica">Metálica</button>
+      <button class="filter-btn" data-shelter="poste_marcado">Poste m.</button>
+      <button class="filter-btn" data-shelter="poste_simple">Poste s.</button>
+      <button class="filter-btn" data-shelter="poste_rural">Rural</button>
+    </div>
+  </div>
+
+  <!-- PROVINCE -->
+  <div class="sidebar-section" id="section-province" style="display:none">
+    <div class="section-label">Distribución por provincia</div>
+    <div>
+      <div class="legend-row"><span class="legend-dot" style="background:#3b82f6"></span>A Coruña<span class="legend-count">9.463</span></div>
+      <div class="legend-row"><span class="legend-dot" style="background:#0ea5e9"></span>Pontevedra<span class="legend-count">7.777</span></div>
+      <div class="legend-row"><span class="legend-dot" style="background:#ef4444"></span>Lugo<span class="legend-count">5.406</span></div>
+      <div class="legend-row"><span class="legend-dot" style="background:#f59e0b"></span>Ourense<span class="legend-count">3.928</span></div>
+    </div>
+  </div>
+
+  <!-- ROUTES -->
+  <div class="sidebar-section" id="section-routes" style="display:none">
+    <div class="section-label">Conexión por líneas</div>
+    <div style="margin-bottom:8px">
+      <div class="legend-row"><span class="legend-dot" style="background:#94a3b8"></span>1 línea<span class="legend-count"></span></div>
+      <div class="legend-row"><span class="legend-dot" style="background:#3b82f6"></span>2–4 líneas<span class="legend-count"></span></div>
+      <div class="legend-row"><span class="legend-dot" style="background:#ef4444"></span>5+ líneas<span class="legend-count"></span></div>
+    </div>
+    <div class="filter-group" id="route-filters">
+      <button class="filter-btn active" data-routes="all">Todas</button>
+      <button class="filter-btn" data-routes="1">1 línea</button>
+      <button class="filter-btn" data-routes="2-4">2–4</button>
+      <button class="filter-btn" data-routes="5+">5+</button>
+    </div>
+  </div>
+
+  <!-- VALIDATION -->
+  <div class="sidebar-section" id="section-validation" style="display:none">
+    <div class="section-label">Estado de validación</div>
+    <div style="margin-bottom:8px">
+      <div class="legend-row"><span class="legend-dot" style="background:#10b981"></span>Validada (OSM)<span class="legend-count">1.220</span></div>
+      <div class="legend-row"><span class="legend-dot" style="background:#f59e0b"></span>Sin marquesina (OSM)<span class="legend-count">450</span></div>
+      <div class="legend-row"><span class="legend-dot" style="background:#fbbf24"></span>Parcial (sin tag)<span class="legend-count">2.204</span></div>
+      <div class="legend-row"><span class="legend-dot" style="background:#64748b"></span>Sin verificar<span class="legend-count">22.706</span></div>
+    </div>
+    <div class="filter-group" id="validation-filters">
+      <button class="filter-btn active" data-validation="all">Todas</button>
+      <button class="filter-btn" data-validation="validated">Validadas</button>
+      <button class="filter-btn" data-validation="validated_no_shelter">Sin marquesina</button>
+      <button class="filter-btn" data-validation="partial">Parcial</button>
+      <button class="filter-btn" data-validation="unverified">Sin verificar</button>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="sidebar-footer">
+    <p>Tipología estimada por heurística · Validación: cruce GTFS + OSM<br>
+    Fuente: GTFS Xunta de Galicia · OpenStreetMap<br>
+    <a href="https://robertoalmela.com" target="_blank" rel="noopener">robertoalmela.com</a> · <a href="mailto:robertoalmela300@gmail.com">Contacto</a></p>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+<script>
+// ===== CONFIG =====
+const TYPE_COLORS = {
+  moderna_xunta: '#e63946',
+  marquesina_cerrada: '#f4a261',
+  marquesina_metalica: '#2a9d8f',
+  marquesina_obra: '#e9c46a',
+  poste_marcado: '#457b9d',
+  poste_simple: '#8b5cf6',
+  poste_rural: '#64748b'
+};
+const PROV_COLORS = {
+  'A Coruña': '#3b82f6', 'Pontevedra': '#0ea5e9',
+  'Lugo': '#ef4444', 'Ourense': '#f59e0b', 'Otra': '#94a3b8'
+};
+const ROUTE_COLORS = {1:'#94a3b8', '2-4':'#3b82f6', '5+':'#ef4444'};
+const VALIDATION_COLORS = {
+  validated: '#10b981',
+  validated_no_shelter: '#f59e0b',
+  partial: '#fbbf24',
+  unverified: '#64748b'
+};
+
+let currentView = 'shelter';
+let currentShelter = 'all';
+let currentRoutes = 'all';
+let currentValidation = 'all';
+let allMarkers = [];
+let clusterGroup;
+
+// ===== MAP INIT =====
+const map = L.map('map', {preferCanvas: true}).setView([42.65, -8.15], 8);
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>',
+  subdomains: 'abcd',
+  maxZoom: 19
+}).addTo(map);
+
+// ===== HELPERS =====
+function getColor(props) {
+  if (currentView === 'province') return PROV_COLORS[props.province] || '#94a3b8';
+  if (currentView === 'routes') {
+    if (props.route_count >= 5) return ROUTE_COLORS['5+'];
+    if (props.route_count >= 2) return ROUTE_COLORS['2-4'];
+    return ROUTE_COLORS[1];
+  }
+  if (currentView === 'validation') return VALIDATION_COLORS[props.validation_status] || '#64748b';
+  return TYPE_COLORS[props.shelter_type] || '#94a3b8';
+}
+
+function getRadius(rc) {
+  if (rc >= 5) return 7;
+  if (rc >= 3) return 5;
+  if (rc >= 2) return 4;
+  return 3;
+}
+
+function shouldShow(props) {
+  if (currentShelter !== 'all' && props.shelter_type !== currentShelter) return false;
+  if (currentRoutes === '1' && props.route_count !== 1) return false;
+  if (currentRoutes === '2-4' && (props.route_count < 2 || props.route_count > 4)) return false;
+  if (currentRoutes === '5+' && props.route_count < 5) return false;
+  if (currentValidation !== 'all' && props.validation_status !== currentValidation) return false;
+  return true;
+}
+
+// ===== SHOW/HIDE SECTIONS =====
+function showSection(view) {
+  ['shelter','province','routes','validation'].forEach(s => {
+    const el = document.getElementById('section-' + s);
+    if (el) el.style.display = s === view ? '' : 'none';
+  });
+}
+
+// ===== LOAD DATA =====
+fetch('stops.geojson')
+  .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+  .then(geojson => {
+    document.getElementById('loading').classList.add('done');
+    initMarkers(geojson);
+  })
+  .catch(err => {
+    document.getElementById('loading').innerHTML = '<p style="color:#ef4444">Error al cargar: ' + err.message + '</p>';
+  });
+
+function initMarkers(geojson) {
+  clusterGroup = L.markerClusterGroup({
+    maxClusterRadius: 50,
+    spiderfyOnMaxZoom: true,
+    showCoverageOnHover: false,
+    zoomToBoundsOnClick: true,
+    iconCreateFunction: function(cluster) {
+      const count = cluster.getChildCount();
+      const dim = count < 50 ? 36 : count < 200 ? 44 : 52;
+      const size = dim + 'px';
+      const fs = dim < 40 ? '10px' : '12px';
+      const style = `background:rgba(59,130,246,0.5);border:2px solid rgba(59,130,246,0.8);border-radius:50%;width:${size};height:${size};display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:${fs};`;
+      return L.divIcon({html:`<div style="${style}">${count}</div>`, className:'', iconSize:[dim,dim]});
+    }
+  });
+
+  geojson.features.forEach(f => {
+    const p = f.properties;
+    const coords = f.geometry.coordinates;
+    const color = getColor(p);
+    const radius = getRadius(p.route_count);
+
+    const marker = L.circleMarker([coords[1], coords[0]], {
+      radius: radius, fillColor: color, color: color,
+      weight: p.route_count > 3 ? 2 : 1, opacity: 0.9, fillOpacity: 0.7
+    });
+
+    const svUrl = `https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${coords[1]},${coords[0]}`;
+    const mapsUrl = `https://www.google.com/maps?q=${coords[1]},${coords[0]}`;
+    const vs = p.validation_status || 'unverified';
+    const vsLabel = vs === 'validated' ? 'Validada' : vs === 'validated_no_shelter' ? 'Sin marquesina' : vs === 'partial' ? 'Parcial' : 'Sin verificar';
+
+    marker.bindPopup(`<div class="popup-title">${p.name}</div>
+<div class="popup-row"><span style="color:${color}">■</span> ${p.shelter_icon} ${p.shelter_label}</div>
+<div class="popup-row">${vs === 'validated' ? '✅' : vs === 'validated_no_shelter' ? '⚠️' : '🔍'} ${vsLabel}</div>
+<div class="popup-row">🚌 ${p.route_count} línea(s) · ${p.province}</div>
+<div class="popup-row">📍 <a href="${mapsUrl}" target="_blank" rel="noopener">${coords[1].toFixed(5)}, ${coords[0].toFixed(5)}</a></div>
+<div class="popup-actions">
+  <a href="${mapsUrl}" target="_blank" rel="noopener" class="popup-btn popup-btn-maps">📍 Maps</a>
+  <a href="${svUrl}" target="_blank" rel="noopener" class="popup-btn popup-btn-sv">👁️ Street View</a>
+</div>`, {className: 'custom-popup'});
+
+    marker._props = p;
+    allMarkers.push(marker);
+    clusterGroup.addLayer(marker);
+  });
+
+  map.addLayer(clusterGroup);
+}
+
+function applyFilters() {
+  if (!clusterGroup) return;
+  let visible = 0;
+  allMarkers.forEach(m => {
+    const show = shouldShow(m._props);
+    if (show) {
+      if (!clusterGroup.hasLayer(m)) clusterGroup.addLayer(m);
+      m.setStyle({fillColor: getColor(m._props), color: getColor(m._props)});
+      visible++;
+    } else {
+      if (clusterGroup.hasLayer(m)) clusterGroup.removeLayer(m);
+    }
+  });
+  document.getElementById('stat-visible').textContent = visible.toLocaleString();
+}
+
+// ===== SIDEBAR TOGGLE (mobile) =====
+function toggleSidebar() {
+  const sb = document.getElementById('sidebar');
+  const btn = document.getElementById('sidebar-toggle');
+  sb.classList.toggle('collapsed');
+  btn.textContent = sb.classList.contains('collapsed') ? '☰' : '✕';
+}
+
+// ===== EVENT LISTENERS =====
+// View toggle
+document.querySelectorAll('#view-toggle .view-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#view-toggle .view-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentView = btn.dataset.view;
+    showSection(currentView);
+    applyFilters();
+  });
+});
+
+// Shelter filter
+document.querySelectorAll('#shelter-filters .filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#shelter-filters .filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentShelter = btn.dataset.shelter;
+    applyFilters();
+  });
+});
+
+// Route filter
+document.querySelectorAll('#route-filters .filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#route-filters .filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentRoutes = btn.dataset.routes;
+    applyFilters();
+  });
+});
+
+// Validation filter
+document.querySelectorAll('#validation-filters .filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#validation-filters .filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentValidation = btn.dataset.validation;
+    if (currentView !== 'validation') {
+      currentView = 'validation';
+      document.querySelectorAll('#view-toggle .view-btn').forEach(b => b.classList.remove('active'));
+      document.querySelector('#view-toggle .view-btn[data-view="validation"]').classList.add('active');
+      showSection('validation');
+    }
+    applyFilters();
+  });
+});
+
+// Auto-show mobile toggle after initial load
+if (window.innerWidth < 768) {
+  document.getElementById('sidebar-toggle').style.display = 'flex';
+}
+window.addEventListener('resize', () => {
+  const btn = document.getElementById('sidebar-toggle');
+  const sb = document.getElementById('sidebar');
+  if (window.innerWidth >= 768) {
+    btn.style.display = 'none';
+    sb.classList.remove('collapsed');
+  } else {
+    btn.style.display = 'flex';
+  }
+});
+</script>
+</body>
+</html>

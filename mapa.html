@@ -3,253 +3,691 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Marquesinas de Galicia — Mapa de Paradas de Autobús</title>
+<title>Marquesinas de Galicia · Street View</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
-<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
 <style>
-*{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Segoe UI',system-ui,sans-serif;background:#0f1923;color:#e0e0e0}
-#map{width:100%;height:100vh}
-#sidebar{position:absolute;top:10px;right:10px;z-index:1000;background:rgba(15,25,35,0.94);border-radius:12px;padding:14px;width:280px;max-height:calc(100vh - 20px);overflow-y:auto;backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.1);font-size:13px;line-height:1.4}
-#sidebar h1{font-size:15px;margin-bottom:6px;color:#fff}
-#sidebar h2{font-size:12px;margin:10px 0 4px;color:#8ab4f8;text-transform:uppercase;letter-spacing:0.5px}
-.stat{display:flex;justify-content:space-between;padding:2px 0;border-bottom:1px solid rgba(255,255,255,0.05)}
-.stat-val{font-weight:700;color:#fff}
-.legend-row{display:flex;align-items:center;padding:2px 0;font-size:12px}
-.legend-dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;flex-shrink:0}
-.legend-count{margin-left:auto;color:#aaa;font-size:11px}
-.filter-btn{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);color:#ccc;padding:4px 8px;border-radius:5px;cursor:pointer;margin:2px;font-size:11px;transition:all 0.15s;display:inline-block}
-.filter-btn:hover,.filter-btn.active{background:rgba(255,255,255,0.18);border-color:#8ab4f8;color:#fff}
-.section{background:rgba(255,255,255,0.03);border-radius:8px;padding:8px 10px;margin:6px 0}
-#loading{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:2000;color:#8ab4f8;font-size:18px;text-align:center}
-#loading .spinner{width:40px;height:40px;border:3px solid rgba(138,180,248,0.2);border-top:3px solid #8ab4f8;border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 12px}
-@keyframes spin{to{transform:rotate(360deg)}}
-.leaflet-popup-content-wrapper{background:rgba(15,25,35,0.95);color:#e0e0e0;border-radius:8px;border:1px solid rgba(255,255,255,0.1)}
-.leaflet-popup-tip{background:rgba(15,25,35,0.95)}
-.leaflet-popup-content{margin:8px 12px;font-size:12px;line-height:1.5}
-.leaflet-popup-content b{color:#8ab4f8}
-#view-toggle{display:flex;gap:4px;margin:4px 0}
-#view-toggle .filter-btn{flex:1;text-align:center}
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: #08090a; color: #e0e0e0; }
+  #map { position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 1; }
+
+  /* Sidebar */
+  #sidebar {
+    position: absolute; top: 12px; left: 12px; z-index: 1000;
+    width: 280px; background: rgba(8,9,10,0.92); border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px; padding: 16px; backdrop-filter: blur(12px);
+    max-height: calc(100vh - 24px); overflow-y: auto;
+  }
+  #sidebar::-webkit-scrollbar { width: 4px; }
+  #sidebar::-webkit-scrollbar-track { background: transparent; }
+  #sidebar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 2px; }
+
+  #sidebar h1 {
+    font-size: 15px; font-weight: 600; color: #fff;
+    letter-spacing: -0.01em; margin-bottom: 4px;
+  }
+  #sidebar .subtitle { font-size: 11px; color: rgba(255,255,255,0.4); margin-bottom: 12px; }
+
+  .stat-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.04);
+    font-size: 12px;
+  }
+  .stat-row .label { color: rgba(255,255,255,0.5); }
+  .stat-row .value { color: #fff; font-weight: 500; font-variant-numeric: tabular-nums; }
+
+  #stats { margin-bottom: 10px; }
+
+  .section-title {
+    font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.3);
+    text-transform: uppercase; letter-spacing: 0.05em; margin: 10px 0 6px;
+  }
+
+  .btn-group { display: flex; gap: 4px; flex-wrap: wrap; }
+
+  .btn {
+    flex: 1; min-width: 60px; padding: 6px 8px; border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 6px; background: rgba(255,255,255,0.04);
+    color: rgba(255,255,255,0.6); font-size: 11px; cursor: pointer;
+    text-align: center; transition: all 0.15s;
+  }
+  .btn:hover { background: rgba(255,255,255,0.08); color: #fff; }
+  .btn.active { background: rgba(94,106,210,0.2); border-color: rgba(94,106,210,0.4); color: #5e6ad2; }
+  .btn-success { border-color: rgba(76,175,80,0.3); color: #4caf50; }
+  .btn-success:hover { background: rgba(76,175,80,0.1); }
+  .btn-danger { border-color: rgba(230,57,70,0.3); color: #e63946; }
+  .btn-danger:hover { background: rgba(230,57,70,0.1); }
+  .btn-export { background: rgba(233,196,106,0.1); border-color: rgba(233,196,106,0.3); color: #e9c46a; width: 100%; margin-top: 6px; }
+  .btn-export:hover { background: rgba(233,196,106,0.2); }
+
+  /* Legend */
+  .legend-row { display: flex; align-items: center; gap: 6px; font-size: 11px; padding: 2px 0; color: rgba(255,255,255,0.6); }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+  /* Sync indicator */
+  #sync-indicator {
+    font-size: 10px; color: rgba(255,255,255,0.3); margin-top: 8px;
+    display: flex; align-items: center; gap: 4px;
+  }
+  #sync-indicator .dot { width: 6px; height: 6px; border-radius: 50%; background: #4caf50; }
+  #sync-indicator.syncing .dot { background: #e9c46a; animation: pulse 0.5s infinite; }
+  #sync-indicator.error .dot { background: #e63946; }
+  @keyframes pulse { 50% { opacity: 0.3; } }
+
+  /* Notification */
+  #notification {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+    z-index: 9999; padding: 10px 20px; border-radius: 8px;
+    background: rgba(15,25,35,0.95); color: #fff; font-size: 13px;
+    border: 1px solid rgba(255,255,255,0.1);
+    transition: opacity 0.3s; pointer-events: none;
+    opacity: 0;
+  }
+  #notification.show { opacity: 1; }
+
+  /* Leaflet overrides for dark theme */
+  .leaflet-popup-content-wrapper {
+    background: rgba(15,25,35,0.96); color: #e0e0e0;
+    border-radius: 10px; border: 1px solid rgba(255,255,255,0.08);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    padding: 0;
+  }
+  .leaflet-popup-tip { background: rgba(15,25,35,0.96); border: 1px solid rgba(255,255,255,0.08); }
+  .leaflet-popup-content { margin: 12px 14px; font-size: 12px; line-height: 1.5; min-width: 220px; }
+  .leaflet-popup-close-button { color: rgba(255,255,255,0.3) !important; }
+
+  .popup-name { font-size: 14px; font-weight: 600; color: #fff; margin-bottom: 4px; }
+  .popup-info { color: rgba(255,255,255,0.6); margin-bottom: 2px; }
+  .popup-info a { color: #8ab4f8; text-decoration: none; }
+  .popup-info a:hover { text-decoration: underline; }
+
+  .popup-btns { display: flex; gap: 4px; margin-top: 8px; }
+  .popup-btn {
+    flex: 1; text-align: center; padding: 6px 4px; border-radius: 6px;
+    font-size: 11px; font-weight: 500; cursor: pointer; border: none;
+    transition: all 0.15s; text-decoration: none; display: inline-block;
+  }
+  .popup-btn-map { background: rgba(138,180,248,0.12); color: #8ab4f8; }
+  .popup-btn-map:hover { background: rgba(138,180,248,0.2); }
+  .popup-btn-sv { background: rgba(76,175,80,0.12); color: #4caf50; }
+  .popup-btn-sv:hover { background: rgba(76,175,80,0.2); }
+  .popup-btn-keep { background: rgba(94,106,210,0.12); color: #5e6ad2; }
+  .popup-btn-keep:hover { background: rgba(94,106,210,0.2); }
+  .popup-btn-remove { background: rgba(230,57,70,0.12); color: #e63946; }
+  .popup-btn-remove:hover { background: rgba(230,57,70,0.2); }
+  .popup-btn-keep.active-btn { background: rgba(94,106,210,0.3); border: 1px solid rgba(94,106,210,0.4); }
+  .popup-btn-remove.active-btn { background: rgba(230,57,70,0.3); border: 1px solid rgba(230,57,70,0.4); }
+
+  /* Loading */
+  #loading {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    z-index: 99999; background: #08090a;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+  }
+  #loading .spinner {
+    width: 32px; height: 32px; border: 2px solid rgba(255,255,255,0.1);
+    border-top-color: #5e6ad2; border-radius: 50%;
+    animation: spin 0.8s linear infinite; margin-bottom: 16px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  #loading p { color: rgba(255,255,255,0.5); font-size: 13px; }
+
+  /* Responsive sidebar */
+  @media (max-width: 640px) {
+    #sidebar { width: 200px; padding: 12px; top: 8px; left: 8px; }
+    #sidebar h1 { font-size: 13px; }
+  }
 </style>
 </head>
 <body>
-<div id="loading"><div class="spinner"></div>Cargando 26.580 paradas...</div>
-<div id="map"></div>
-<div id="sidebar">
-  <h1>🚌 Marquesinas de Galicia</h1>
-  <p style="color:#8ab4f8;font-size:11px;margin-bottom:6px;">Mapa de paradas — Proyecto documental</p>
-  
-  <h2>📊 Estadísticas</h2>
-  <div class="section">
-    <div class="stat"><span>Total paradas</span><span class="stat-val">26.580</span></div>
-    <div class="stat"><span>En el mapa</span><span class="stat-val" id="stat-visible">26.580</span></div>
-    <div class="stat"><span>Líneas de bus</span><span class="stat-val">6.581</span></div>
-  </div>
 
-  <h2>🎨 Vista</h2>
-  <div id="view-toggle">
-    <button class="filter-btn active" data-view="shelter">Por tipo</button>
-    <button class="filter-btn" data-view="province">Provincia</button>
-    <button class="filter-btn" data-view="routes">Conexión</button>
-  </div>
-
-  <h2>📸 Tipología marquesina</h2>
-  <div class="section" id="shelter-legend">
-    <div class="legend-row"><span class="legend-dot" style="background:#e63946"></span>Moderna Xunta<span class="legend-count" id="cnt-moderna">1.213</span></div>
-    <div class="legend-row"><span class="legend-dot" style="background:#f4a261"></span>Cerrada<span class="legend-count" id="cnt-cerrada">5.712</span></div>
-    <div class="legend-row"><span class="legend-dot" style="background:#2a9d8f"></span>Metálica<span class="legend-count" id="cnt-metalica">11.931</span></div>
-    <div class="legend-row"><span class="legend-dot" style="background:#e9c46a"></span>Obra/Piedra<span class="legend-count" id="cnt-obra">—</span></div>
-    <div class="legend-row"><span class="legend-dot" style="background:#457b9d"></span>Poste marcado<span class="legend-count" id="cnt-pmarcado">6.366</span></div>
-    <div class="legend-row"><span class="legend-dot" style="background:#9b59b6"></span>Poste simple<span class="legend-count" id="cnt-psimple">683</span></div>
-    <div class="legend-row"><span class="legend-dot" style="background:#6c757d"></span>Poste rural<span class="legend-count" id="cnt-prural">675</span></div>
-  </div>
-
-  <h2>🔍 Filtrar tipo</h2>
-  <div id="shelter-filters" style="display:flex;flex-wrap:wrap;gap:2px;">
-    <button class="filter-btn active" data-shelter="all">Todas</button>
-    <button class="filter-btn" data-shelter="moderna_xunta">🏛️ Moderna</button>
-    <button class="filter-btn" data-shelter="marquesina_cerrada">🏠 Cerrada</button>
-    <button class="filter-btn" data-shelter="marquesina_metalica">🚌 Metálica</button>
-    <button class="filter-btn" data-shelter="poste_marcado">🪧 Poste m.</button>
-    <button class="filter-btn" data-shelter="poste_simple">📍 Poste s.</button>
-    <button class="filter-btn" data-shelter="poste_rural">🌲 Rural</button>
-  </div>
-
-  <h2>🗺️ Provincia</h2>
-  <div class="section">
-    <div class="legend-row"><span class="legend-dot" style="background:#0077b6"></span>A Coruña<span class="legend-count">9.463</span></div>
-    <div class="legend-row"><span class="legend-dot" style="background:#2a9d8f"></span>Pontevedra<span class="legend-count">7.777</span></div>
-    <div class="legend-row"><span class="legend-dot" style="background:#e63946"></span>Lugo<span class="legend-count">5.406</span></div>
-    <div class="legend-row"><span class="legend-dot" style="background:#f4a261"></span>Ourense<span class="legend-count">3.928</span></div>
-  </div>
-
-  <h2>📐 Conexión</h2>
-  <div id="route-filters" style="display:flex;flex-wrap:wrap;gap:2px;">
-    <button class="filter-btn active" data-routes="all">Todas</button>
-    <button class="filter-btn" data-routes="1">1 línea</button>
-    <button class="filter-btn" data-routes="2-4">2-4</button>
-    <button class="filter-btn" data-routes="5+">5+</button>
-  </div>
-
-  <p style="font-size:10px;color:#555;margin-top:10px;">
-    ⚠️ Tipología estimada por heurística (densidad + líneas)<br>
-    Clasificación real se completa con Street View / campo<br><br>
-    Fuente: GTFS Xunta de Galicia (mayo 2026) · NAP/MITRAMS<br>
-    <a href="https://robertoalmela.com" style="color:#8ab4f8;">robertoalmela.com</a>
-  </p>
+<div id="loading">
+  <div class="spinner"></div>
+  <p>Cargando mapa…</p>
 </div>
 
+<div id="map"></div>
+
+<div id="sidebar">
+  <h1>🚌 Marquesinas SV</h1>
+  <div class="subtitle">Selecciona las paradas para tu ruta</div>
+
+  <div id="stats">
+    <div class="stat-row"><span class="label">Total con SV</span><span class="value" id="stat-total">20.009</span></div>
+    <div class="stat-row"><span class="label">Mantener</span><span class="value" id="stat-kept" style="color:#5e6ad2">0</span></div>
+    <div class="stat-row"><span class="label">Quitar</span><span class="value" id="stat-skipped" style="color:#e63946">0</span></div>
+    <div class="stat-row"><span class="label">Pendientes</span><span class="value" id="stat-pending">20.009</span></div>
+  </div>
+
+  <div class="section-title">Filtro</div>
+  <div class="btn-group">
+    <button class="btn active" data-filter="all" onclick="setFilter('all')">Todas</button>
+    <button class="btn" data-filter="kept" onclick="setFilter('kept')" style="color:#5e6ad2">✅ Mantener</button>
+    <button class="btn" data-filter="pending" onclick="setFilter('pending')">Pendientes</button>
+  </div>
+
+  <div class="section-title">Leyenda</div>
+  <div class="legend-row"><span class="legend-dot" style="background:#5e6ad2"></span>✅ Mantener</div>
+  <div class="legend-row"><span class="legend-dot" style="background:#e63946"></span>❌ Quitar</div>
+  <div class="legend-row"><span class="legend-dot" style="background:rgba(255,255,255,0.25)"></span>⏳ Pendiente</div>
+
+  <div style="margin-top:8px">
+    <button class="btn btn-export" onclick="exportRoute()">📥 Exportar CSV</button>
+  </div>
+
+  <div id="sync-indicator">
+    <span class="dot"></span>
+    <span id="sync-text">Sincronizado</span>
+  </div>
+</div>
+
+<div id="notification"></div>
+
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 <script>
-const TYPE_COLORS = {
-  moderna_xunta: '#e63946',
-  marquesina_cerrada: '#f4a261',
-  marquesina_metalica: '#2a9d8f',
-  marquesina_obra: '#e9c46a',
-  poste_marcado: '#457b9d',
-  poste_simple: '#9b59b6',
-  poste_rural: '#6c757d'
-};
-const PROV_COLORS = {
-  'A Coruña': '#0077b6', 'Pontevedra': '#2a9d8f',
-  'Lugo': '#e63946', 'Ourense': '#f4a261', 'Otra': '#999'
-};
-const ROUTE_COLORS = {1:'#adb5bd', '2-4':'#4dabf7', '5+':'#ff6b6b'};
+// ===== CONFIG =====
+const GEOJSON_URL = 'stops.geojson';
+const API_URL = 'api.php';
+const POLL_INTERVAL = 5000; // 5s
 
-let currentView = 'shelter';
-let currentShelter = 'all';
-let currentRoutes = 'all';
+// ===== BACKEND STATE =====
+// In-memory mirrors of DB state
+let _kept = [];      // [{id, lat, lng, name}]
+let _removed = [];   // [stop_id]
+let _lastPollTime = '1970-01-01 00:00:00';
+let _apiOnline = true;
 
-const map = L.map('map',{preferCanvas:true}).setView([42.65,-8.15],8);
-L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{
-  attribution:'&copy; OSM &copy; CARTO',maxZoom:19
+function isKept(id)    { return _kept.some(s => s.id === id || s.stop_id === id); }
+function isRemoved(id) { return _removed.includes(id); }
+function isPending(id) { return !isKept(id) && !isRemoved(id); }
+
+// ===== LOCAL STORAGE (primary fallback) =====
+function loadFromLocal() {
+  try {
+    const k = localStorage.getItem('sv_kept');
+    const r = localStorage.getItem('sv_removed');
+    if (k) _kept = JSON.parse(k);
+    if (r) _removed = JSON.parse(r);
+    console.log(`[Local] Loaded ${_kept.length} kept, ${_removed.length} removed from localStorage`);
+  } catch(e) { console.warn('[Local] Failed to read localStorage:', e); }
+}
+
+function saveToLocal() {
+  try {
+    localStorage.setItem('sv_kept', JSON.stringify(_kept));
+    localStorage.setItem('sv_removed', JSON.stringify(_removed));
+  } catch(e) { /* localStorage full — ignore */ }
+}
+
+// ===== API CALLS =====
+async function apiGet() {
+  const r = await fetch(`${API_URL}?action=get`);
+  if (!r.ok) throw new Error('API get failed');
+  return r.json();
+}
+
+async function apiSave(stopId, decision, lat, lng, name) {
+  const r = await fetch(`${API_URL}?action=save`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ stop_id: stopId, decision, lat, lng, name })
+  });
+  if (!r.ok) throw new Error('API save failed');
+  return r.json();
+}
+
+async function apiDelete(stopId) {
+  const r = await fetch(`${API_URL}?action=delete`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ stop_id: stopId })
+  });
+  if (!r.ok) throw new Error('API delete failed');
+  return r.json();
+}
+
+async function apiPoll() {
+  const r = await fetch(`${API_URL}?action=poll&since=${encodeURIComponent(_lastPollTime)}`);
+  if (!r.ok) throw new Error('API poll failed');
+  return r.json();
+}
+
+// ===== LOAD DECISIONS (try API, fallback localStorage) =====
+async function loadDecisions() {
+  // Always load localStorage first as baseline
+  loadFromLocal();
+  
+  try {
+    const data = await apiGet();
+    // API succeeded — merge with local (API is source of truth)
+    _kept = data.kept || [];
+    _removed = (data.removed || []).map(d => typeof d === 'string' ? d : d.stop_id);
+    // Set poll time to latest
+    if (_kept.length > 0) {
+      const latestKept = _kept.reduce((a, b) => (a.updated_at > b.updated_at ? a : b));
+      if (latestKept.updated_at > _lastPollTime) _lastPollTime = latestKept.updated_at;
+    }
+    // Sync localStorage with API data
+    saveToLocal();
+    _apiOnline = true;
+    setSyncStatus('ok');
+  } catch (e) {
+    console.warn('API failed, using localStorage data:', e);
+    _apiOnline = false;
+    setSyncStatus('error');
+  }
+}
+
+// ===== MARK DECISIONS (now via API) =====
+async function markKept(feat) {
+  const id = feat.properties.stop_id;
+  const lat = feat.geometry.coordinates[1];
+  const lng = feat.geometry.coordinates[0];
+  const name = feat.properties.name;
+  
+  // Optimistic UI update
+  _removed = _removed.filter(d => d !== id);
+  if (!isKept(id)) {
+    _kept.push({ id, stop_id: id, lat, lng, name, updated_at: new Date().toISOString() });
+  }
+  saveToLocal(); // Always save locally
+  updateStats();
+  updateMarkerStyle(id);
+  showNotification('✅ Mantenida: ' + name);
+  
+  // Try API persist
+  if (_apiOnline) {
+    try {
+      await apiSave(id, 'kept', lat, lng, name);
+      setSyncStatus('ok');
+    } catch (e) {
+      console.error('API save failed, kept in localStorage:', e);
+      _apiOnline = false;
+      setSyncStatus('error');
+    }
+  }
+}
+
+async function markRemoved(feat) {
+  const id = feat.properties.stop_id;
+  
+  // Optimistic UI update
+  _kept = _kept.filter(s => (s.id || s.stop_id) !== id);
+  if (!isRemoved(id)) {
+    _removed.push(id);
+  }
+  saveToLocal(); // Always save locally
+  updateStats();
+  updateMarkerStyle(id);
+  showNotification('❌ Quitada: ' + feat.properties.name);
+  
+  // Try API persist
+  if (_apiOnline) {
+    try {
+      await apiSave(id, 'removed', null, null, '');
+      setSyncStatus('ok');
+    } catch (e) {
+      console.error('API save failed, kept in localStorage:', e);
+      _apiOnline = false;
+      setSyncStatus('error');
+    }
+  }
+}
+
+async function unmarkDecision(feat) {
+  const id = feat.properties.stop_id;
+  
+  // Optimistic UI update
+  _kept = _kept.filter(s => (s.id || s.stop_id) !== id);
+  _removed = _removed.filter(d => d !== id);
+  saveToLocal(); // Always save locally
+  updateStats();
+  updateMarkerStyle(id);
+  showNotification('↩️ Pendiente: ' + feat.properties.name);
+  
+  // Try API delete
+  if (_apiOnline) {
+    try {
+      await apiDelete(id);
+      setSyncStatus('ok');
+    } catch (e) {
+      console.error('API delete failed, kept in localStorage:', e);
+      _apiOnline = false;
+      setSyncStatus('error');
+    }
+  }
+}
+
+// ===== LOCAL BACKUP (fallback) =====
+function saveDecisionsLocal() {
+  try {
+    localStorage.setItem('sv_kept', JSON.stringify(_kept));
+    localStorage.setItem('sv_removed', JSON.stringify(_removed));
+  } catch (e) { /* localStorage full — ignore */ }
+}
+
+// ===== SYNC STATUS =====
+function setSyncStatus(status) {
+  const el = document.getElementById('sync-indicator');
+  const text = document.getElementById('sync-text');
+  el.className = '';
+  if (status === 'ok') {
+    text.textContent = 'Sincronizado';
+  } else if (status === 'syncing') {
+    el.className = 'syncing';
+    text.textContent = 'Sincronizando…';
+  } else {
+    el.className = 'error';
+    text.textContent = 'Sin conexión';
+  }
+}
+
+// ===== POLLING (hot reload) =====
+let pollTimer = null;
+
+async function pollChanges() {
+  try {
+    setSyncStatus('syncing');
+    const data = await apiPoll();
+    _lastPollTime = data.server_time;
+    
+    if (data.changes && data.changes.length > 0) {
+      let changed = 0;
+      // Apply remote changes to local state
+      data.changes.forEach(c => {
+        const id = c.stop_id;
+        
+        if (c.decision === 'kept') {
+          _removed = _removed.filter(d => d !== id);
+          if (!isKept(id)) {
+            _kept.push({ id, stop_id: id, lat: parseFloat(c.lat), lng: parseFloat(c.lng), name: c.name, updated_at: c.updated_at });
+          }
+        } else if (c.decision === 'removed') {
+          _kept = _kept.filter(s => (s.id || s.stop_id) !== id);
+          if (!_removed.includes(id)) {
+            _removed.push(id);
+          }
+        }
+        // Update marker color + visibility
+        const marker = allMarkers.find(m => m._props.stop_id === id);
+        if (marker) {
+          updateMarkerStyle(id);
+          applyFilterToOne(marker, id);
+        }
+        changed++;
+      });
+      
+      saveDecisionsLocal();
+      updateStats();
+      if (changed > 0) {
+        showNotification(`🔄 ${changed} cambio${changed > 1 ? 's' : ''} sincronizado${changed > 1 ? 's' : ''}`);
+      }
+    }
+    
+    setSyncStatus('ok');
+  } catch (e) {
+    console.warn('Poll failed:', e);
+    setSyncStatus('error');
+  }
+}
+
+function startPolling() {
+  if (pollTimer) return;
+  pollTimer = setInterval(pollChanges, POLL_INTERVAL);
+}
+
+// ===== NOTIFICATION =====
+function showNotification(msg) {
+  const el = document.getElementById('notification');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(el._timeout);
+  el._timeout = setTimeout(() => el.classList.remove('show'), 2000);
+}
+
+// ===== MAP =====
+const map = window._galiciaMap = L.map('map', {
+  preferCanvas: true,
+  center: [42.65, -8.15],
+  zoom: 8,
+  zoomControl: true
+});
+
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>',
+  subdomains: 'abcd',
+  maxZoom: 19
 }).addTo(map);
 
-function getColor(props) {
-  if (currentView === 'province') return PROV_COLORS[props.province] || '#999';
-  if (currentView === 'routes') {
-    if (props.route_count >= 5) return ROUTE_COLORS['5+'];
-    if (props.route_count >= 2) return ROUTE_COLORS['2-4'];
-    return ROUTE_COLORS[1];
-  }
-  return TYPE_COLORS[props.shelter_type] || '#999';
-}
-
-function getRadius(rc) {
-  if (rc > 5) return 7;
-  if (rc > 3) return 5;
-  if (rc > 1) return 4;
-  return 3;
-}
-
-function shouldShow(props) {
-  if (currentShelter !== 'all' && props.shelter_type !== currentShelter) return false;
-  if (currentRoutes === '1' && props.route_count !== 1) return false;
-  if (currentRoutes === '2-4' && (props.route_count < 2 || props.route_count > 4)) return false;
-  if (currentRoutes === '5+' && props.route_count < 5) return false;
-  return true;
-}
-
+// ===== MARKERS =====
 let allMarkers = [];
-let clusterGroup;
+let currentFilter = 'all';
 
-fetch('stops.geojson')
-  .then(r => r.json())
-  .then(geojson => {
-    document.getElementById('loading').style.display = 'none';
-    initMarkers(geojson);
-  })
-  .catch(err => {
-    document.getElementById('loading').textContent = 'Error: ' + err;
-  });
+function getShelterColor(type) {
+  const colors = {
+    'marquesina_metalica': '#2a9d8f',
+    'marquesina_cerrada': '#264653',
+    'moderna_xunta': '#e63946',
+    'poste_marcado': '#457b9d',
+    'poste_simple': '#a8dadc',
+    'poste_rural': '#6d6875'
+  };
+  return colors[type] || '#888';
+}
 
-function initMarkers(geojson) {
-  clusterGroup = L.markerClusterGroup({
-    maxClusterRadius: 50,
-    spiderfyOnMaxZoom: true,
-    showCoverageOnHover: false,
-    zoomToBoundsOnClick: true,
-    iconCreateFunction: function(cluster) {
-      const count = cluster.getChildCount();
-      let dim = count < 50 ? 36 : count < 200 ? 44 : 52;
-      let style = `background:rgba(138,180,248,0.6);border:2px solid rgba(138,180,248,0.9);border-radius:50%;width:${dim}px;height:${dim}px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:${dim<40?10:12}px;`;
-      return L.divIcon({html:`<div style="${style}">${count}</div>`,className:'',iconSize:[dim,dim]});
+function updateMarkerStyle(stopId) {
+  allMarkers.forEach(m => {
+    if (m._props.stop_id === stopId) {
+      let color, radius;
+      if (isKept(stopId)) {
+        color = '#5e6ad2';
+        radius = 9;
+      } else if (isRemoved(stopId)) {
+        color = '#e63946';
+        radius = 6;
+      } else {
+        color = 'rgba(255,255,255,0.25)';
+        radius = 6;
+      }
+      m.setStyle({ fillColor: color, color: color, radius: radius });
     }
   });
+}
 
-  geojson.features.forEach(f => {
-    const p = f.properties;
-    const coords = f.geometry.coordinates;
-    const color = getColor(p);
-    const radius = getRadius(p.route_count);
+function createPopup(feat) {
+  const p = feat.properties;
+  const coords = feat.geometry.coordinates;
+  const lat = coords[1];
+  const lng = coords[0];
+  const id = p.stop_id;
+  const name = p.name.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+  const color = getShelterColor(p.shelter_type);
+  const mapsUrl = `https://www.google.com/maps?q=${lat},${lng}`;
+  const svUrl = `https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${lat},${lng}`;
+
+  let keptClass = isKept(id) ? 'active-btn' : '';
+  let removedClass = isRemoved(id) ? 'active-btn' : '';
+
+  return `<div>
+    <div class="popup-name">${p.name}</div>
+    <div class="popup-info"><span style="color:${color}">■</span> ${p.shelter_icon} ${p.shelter_label}</div>
+    <div class="popup-info">🚌 ${p.route_count} línea(s) · ${p.province}</div>
+    <div class="popup-info">📍 <a href="${mapsUrl}" target="_blank" rel="noopener">${lat.toFixed(5)}, ${lng.toFixed(5)}</a></div>
+    <div class="popup-btns">
+      <a href="${mapsUrl}" target="_blank" rel="noopener" class="popup-btn popup-btn-map" title="Abrir en Google Maps">📍 Maps</a>
+      <a href="${svUrl}" target="_blank" rel="noopener" class="popup-btn popup-btn-sv" title="Abrir Street View">👁️ SV</a>
+    </div>
+    <div class="popup-btns">
+      <button class="popup-btn popup-btn-keep ${keptClass}" onclick="parent.markKeptFromPopup('${id}')" title="Mantener en ruta">✅ Mantener</button>
+      <button class="popup-btn popup-btn-remove ${removedClass}" onclick="parent.markRemovedFromPopup('${id}')" title="Quitar de la ruta">❌ Quitar</button>
+    </div>
+  </div>`;
+}
+
+// Functions callable from popup (iframe scope workaround)
+function markKeptFromPopup(id) {
+  const marker = allMarkers.find(m => m._props.stop_id === id);
+  if (marker) {
+    markKept({ properties: marker._props, geometry: marker._geo });
+    marker.getPopup()?.setContent(createPopup({ properties: marker._props, geometry: marker._geo }));
+  }
+}
+function markRemovedFromPopup(id) {
+  const marker = allMarkers.find(m => m._props.stop_id === id);
+  if (marker) {
+    markRemoved({ properties: marker._props, geometry: marker._geo });
+    marker.getPopup()?.setContent(createPopup({ properties: marker._props, geometry: marker._geo }));
+  }
+}
+window.markKeptFromPopup = markKeptFromPopup;
+window.markRemovedFromPopup = markRemovedFromPopup;
+
+// ===== INIT: Load DB then GeoJSON =====
+async function init() {
+  // 1. Load decisions from DB
+  await loadDecisionsFromDB();
+  
+  // 2. Load GeoJSON
+  try {
+    const r = await fetch(GEOJSON_URL);
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const geojson = await r.json();
     
-    const marker = L.circleMarker([coords[1], coords[0]], {
-      radius: radius, fillColor: color, color: color,
-      weight: p.route_count > 3 ? 2 : 1, opacity: 0.9, fillOpacity: 0.7
+    document.getElementById('loading').style.display = 'none';
+    
+    geojson.features.forEach(f => {
+      const coords = f.geometry.coordinates;
+      const lat = coords[1], lng = coords[0];
+      const p = f.properties;
+      const id = p.stop_id;
+      
+      // Determine style from DB state
+      let color, radius;
+      if (isKept(id)) {
+        color = '#5e6ad2';
+        radius = 9;
+      } else if (isRemoved(id)) {
+        color = '#e63946';
+        radius = 6;
+      } else {
+        color = 'rgba(255,255,255,0.25)';
+        radius = 6;
+      }
+      
+      const marker = L.circleMarker([lat, lng], {
+        radius: radius,
+        fillColor: color,
+        color: color,
+        weight: 1,
+        opacity: 0.8,
+        fillOpacity: 0.7
+      });
+      
+      marker._props = p;
+      marker._geo = f.geometry;
+      marker.bindPopup(createPopup(f));
+      
+      // Only add to map if not removed
+      if (!isRemoved(id)) {
+        marker.addTo(map);
+      }
+      
+      allMarkers.push(marker);
     });
     
-    marker.bindPopup(`<b>${p.name}</b><br>
-<span style="color:${color}">■</span> ${p.shelter_icon} ${p.shelter_label}<br>
-📍 ${coords[1].toFixed(5)}, ${coords[0].toFixed(5)}<br>
-🚌 ${p.route_count} línea(s) · ${p.province}<br>
-<span style="color:#888;font-size:11px;">Zona: ${p.zone || '—'}</span>`);
+    updateStats();
     
-    marker._props = p;
-    allMarkers.push(marker);
-    clusterGroup.addLayer(marker);
-  });
-
-  map.addLayer(clusterGroup);
+    // 3. Start polling for hot reload
+    startPolling();
+    
+  } catch (err) {
+    document.getElementById('loading').innerHTML = '<p style="color:#e63946">Error: ' + err.message + '</p>';
+  }
 }
 
-function applyFilters() {
-  if (!clusterGroup) return;
-  let visible = 0;
+// ===== FILTER =====
+function setFilter(filter) {
+  currentFilter = filter;
+  document.querySelectorAll('[data-filter]').forEach(b => b.classList.remove('active'));
+  document.querySelector(`[data-filter="${filter}"]`).classList.add('active');
+  applyFilter();
+}
+
+function applyFilter() {
   allMarkers.forEach(m => {
-    const show = shouldShow(m._props);
-    if (show) {
-      if (!clusterGroup.hasLayer(m)) clusterGroup.addLayer(m);
-      const color = getColor(m._props);
-      m.setStyle({fillColor: color, color: color});
-      visible++;
-    } else {
-      if (clusterGroup.hasLayer(m)) clusterGroup.removeLayer(m);
+    const id = m._props.stop_id;
+    let show = false;
+    if (currentFilter === 'all') {
+      show = !isRemoved(id);
+    } else if (currentFilter === 'kept') {
+      show = isKept(id);
+    } else if (currentFilter === 'pending') {
+      show = isPending(id);
+    }
+    if (show && !map.hasLayer(m)) {
+      m.addTo(map);
+    } else if (!show && map.hasLayer(m)) {
+      map.removeLayer(m);
     }
   });
-  document.getElementById('stat-visible').textContent = visible.toLocaleString();
 }
 
-// View toggle
-document.querySelectorAll('#view-toggle .filter-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('#view-toggle .filter-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    currentView = btn.dataset.view;
-    applyFilters();
+function applyFilterToOne(marker, id) {
+  let show = false;
+  if (currentFilter === 'all') {
+    show = !isRemoved(id);
+  } else if (currentFilter === 'kept') {
+    show = isKept(id);
+  } else if (currentFilter === 'pending') {
+    show = isPending(id);
+  }
+  if (show && !map.hasLayer(marker)) {
+    marker.addTo(map);
+  } else if (!show && map.hasLayer(marker)) {
+    map.removeLayer(marker);
+  }
+}
+
+// ===== STATS =====
+function updateStats() {
+  const total = 20009;
+  const kept = _kept.length;
+  const removed = _removed.length;
+  document.getElementById('stat-kept').textContent = kept.toLocaleString();
+  document.getElementById('stat-skipped').textContent = removed.toLocaleString();
+  document.getElementById('stat-pending').textContent = (total - kept - removed).toLocaleString();
+  applyFilter();
+}
+
+// ===== EXPORT =====
+function exportRoute() {
+  if (_kept.length === 0) {
+    showNotification('⚠️ No hay paradas marcadas para exportar');
+    return;
+  }
+  let csv = 'stop_id,lat,lng,name,province,shelter_type\n';
+  _kept.forEach(s => {
+    const id = s.id || s.stop_id;
+    csv += `${id},${s.lat},${s.lng},"${s.name}",,\n`;
   });
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'ruta_marquesinas.csv';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showNotification(`📥 Exportadas ${_kept.length} paradas`);
+}
+
+// Keyboard shortcut
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') map.closePopup();
 });
 
-// Shelter filter
-document.querySelectorAll('#shelter-filters .filter-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('#shelter-filters .filter-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    currentShelter = btn.dataset.shelter;
-    applyFilters();
-  });
-});
-
-// Route filter
-document.querySelectorAll('#route-filters .filter-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('#route-filters .filter-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    currentRoutes = btn.dataset.routes;
-    applyFilters();
-  });
-});
+// Boot
+init();
 </script>
 </body>
 </html>
