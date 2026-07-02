@@ -10,8 +10,6 @@ Street View Classification v1
 import json
 import urllib.request
 import os
-import time
-import base64
 from datetime import datetime
 
 from config_local import API_KEY
@@ -39,7 +37,7 @@ with open(GEOJSON) as f:
 
 # Find stops with SV images (sv_available status)
 sv_stops = [(i, f) for i, f in enumerate(gtfs['features'])
-            if f['properties'].get('street_view_coverage') == True
+            if f['properties'].get('street_view_coverage') is True
             or f['properties'].get('sv_image')]
 
 print(f"Stops with Street View: {len(sv_stops)}")
@@ -93,7 +91,7 @@ for idx, (i, feat) in enumerate(pilot):
             images[h] = img_path
             stats['downloaded'] += 1
             stats['cost_images'] += 0.007
-        except Exception as e:
+        except Exception:
             pass
     
     # Use the best direction (we'll use heading 0 first, then try others)
@@ -126,11 +124,11 @@ for idx, (i, feat) in enumerate(pilot):
 
 elapsed = (datetime.now() - start).total_seconds()
 print(f"\n{'='*60}")
-print(f"=== DOWNLOAD PHASE COMPLETE ===")
+print("=== DOWNLOAD PHASE COMPLETE ===")
 print(f"Time: {elapsed/60:.1f} min")
 print(f"Images downloaded: {stats['downloaded']}")
 print(f"Cost: ${stats['cost_images']:.2f} (real: $0)")
-print(f"")
+print("")
 print(f"Next: AI classification of {len(pilot)} stops")
 
 # Save progress (don't overwrite main geojson yet)

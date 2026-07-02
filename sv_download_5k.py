@@ -28,7 +28,7 @@ for i, feat in enumerate(gtfs['features']):
         unverified.append((i, feat))
 
 print(f"Paradas sin validar OSM: {len(unverified)}")
-print(f"Procesando: primeras 5.000 (4 direcciones)")
+print("Procesando: primeras 5.000 (4 direcciones)")
 
 batch = unverified[:5000]
 
@@ -91,7 +91,7 @@ for idx, (i, feat) in enumerate(batch):
         feat['properties']['street_view_coverage'] = True
         feat['properties']['sv_date'] = meta.get('date', '')
 
-    except Exception as e:
+    except Exception:
         stats['errors'] += 1
         stats['total'] += 1
         continue
@@ -119,7 +119,7 @@ for idx, (i, feat) in enumerate(batch):
                 f.write(img_data)
             stats['downloaded'] += 1
             stats['cost_img'] += 0.007
-        except Exception as e:
+        except Exception:
             stats['download_fail'] += 1
             all_ok = False
 
@@ -156,7 +156,7 @@ total_cost = stats['cost_meta'] + stats['cost_img']
 du = os.popen(f"du -sh {IMG_DIR}").read().strip()
 
 print(f"\n{'='*60}")
-print(f"=== RESUMEN FINAL ===")
+print("=== RESUMEN FINAL ===")
 print(f"Tiempo: {elapsed/60:.1f} min")
 print(f"Procesadas: {stats['total']} (skipped: {stats['skipped']})")
 print(f"Con SV: {stats['sv_ok']} | Sin SV: {stats['sv_no']}")

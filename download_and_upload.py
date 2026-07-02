@@ -10,7 +10,6 @@ Classification Pipeline v2 - Using Hermes vision_analyze via ollama-cloud/gemma4
 import json
 import urllib.request
 import os
-import time
 import ftplib
 from datetime import datetime
 
@@ -40,7 +39,7 @@ for i, feat in enumerate(gtfs['features']):
     if props.get('ai_classification') or props.get('classification_status') == 'done':
         continue
     # Must have SV coverage (either from our download or sv_available)
-    if props.get('street_view_coverage') == True or props.get('sv_image'):
+    if props.get('street_view_coverage') is True or props.get('sv_image'):
         need_classify.append((i, feat))
 
 print(f"Stops needing classification: {len(need_classify)}")
@@ -57,7 +56,7 @@ ftp = ftplib.FTP(FTP_HOST, FTP_USER, FTP_PASS)
 for prov in ["A_Coruna", "Pontevedra", "Lugo", "Ourense"]:
     try:
         ftp.mkd(f"/web/marquesinas_galicia/sv_classify/{prov}")
-    except:
+    except Exception:
         pass
 
 stats = {'downloaded': 0, 'uploaded': 0, 'cost_imgs': 0.0}
@@ -90,7 +89,7 @@ for batch_idx, (i, feat) in enumerate(need_classify[:TOTAL]):
                     f.write(img_data)
                 stats['downloaded'] += 1
                 stats['cost_imgs'] += 0.007
-            except:
+            except Exception:
                 continue
         else:
             img_data = open(fpath, 'rb').read()
@@ -103,7 +102,7 @@ for batch_idx, (i, feat) in enumerate(need_classify[:TOTAL]):
             web_url = f"{WEB_BASE}/{prov_dir}/{fname}"
             stop_urls[h] = web_url
             stats['uploaded'] += 1
-        except Exception as e:
+        except Exception:
             pass
     
     url_map[i] = stop_urls
@@ -122,11 +121,11 @@ with open(URLS_FILE, 'w') as f:
 
 elapsed = (datetime.now() - start).total_seconds()
 print(f"\n{'='*60}")
-print(f"=== DOWNLOAD & UPLOAD COMPLETE ===")
+print("=== DOWNLOAD & UPLOAD COMPLETE ===")
 print(f"Time: {elapsed/60:.1f} min")
 print(f"Stops: {TOTAL}")
 print(f"Images downloaded: {stats['downloaded']}")
 print(f"Images uploaded: {stats['uploaded']}")
 print(f"Cost images: ${stats['cost_imgs']:.2f} (real: $0)")
 print(f"URLs saved to: {URLS_FILE}")
-print(f"\nNext: Run classification using vision_analyze on the URLs")
+print("\nNext: Run classification using vision_analyze on the URLs")

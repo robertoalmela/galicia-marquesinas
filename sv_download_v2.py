@@ -8,7 +8,6 @@ Cost: $0 (free tier)
 import json
 import urllib.request
 import os
-import time
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
@@ -31,7 +30,7 @@ for i, feat in enumerate(gtfs['features']):
         unverified.append((i, feat))
 
 print(f"Paradas sin validar: {len(unverified)}")
-print(f"Procesando: primeras 5.000")
+print("Procesando: primeras 5.000")
 
 batch = unverified[:5000]
 
@@ -183,7 +182,7 @@ total_images = sum(len(os.listdir(os.path.join(IMG_DIR, prov))) for prov in ["A 
 du = os.popen(f"du -sh {IMG_DIR}").read().strip()
 
 print(f"\n{'='*60}")
-print(f"=== RESUMEN FINAL ===")
+print("=== RESUMEN FINAL ===")
 print(f"Tiempo: {elapsed/60:.1f} min")
 print(f"Procesadas: {count}")
 print(f"Con Street View: {stats['sv_ok']} ({stats['sv_ok']/count*100:.1f}%)" if count else "")
@@ -191,9 +190,9 @@ print(f"Sin Street View: {stats['sv_no']} ({stats['sv_no']/count*100:.1f}%)" if 
 print(f"Imágenes descargadas: {total_images} total")
 print(f"Espacio en disco: {du}")
 print(f"Coste API: ${stats['cost']:.2f}")
-print(f"Coste real: $0.00 (crédito gratuito)")
-print(f"")
-print(f"--- PROYECCIÓN 22.706 paradas ---")
+print("Coste real: $0.00 (crédito gratuito)")
+print("")
+print("--- PROYECCIÓN 22.706 paradas ---")
 factor = 22706 / max(count, 1)
 print(f"Imágenes totales estimadas: ~{int(stats['sv_ok']*factor):,}")
 print(f"Espacio estimado: ~{int(total_images*factor/1000*80):,}MB")

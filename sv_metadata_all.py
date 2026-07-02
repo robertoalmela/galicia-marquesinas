@@ -83,7 +83,7 @@ for idx, (i, feat) in enumerate(need_check):
                 props['validation_status'] = 'no_sv'
             stats['sv_no'] += 1
     
-    except Exception as e:
+    except Exception:
         stats['errors'] += 1
     
     stats['total'] += 1
@@ -117,10 +117,10 @@ with open(os.path.join(BASE_DIR, 'stops.geojson'), 'w') as f:
 elapsed = (datetime.now() - stats['start']).total_seconds()
 total_checked = stats['sv_ok'] + stats['sv_no']
 print(f"\n{'='*60}")
-print(f"=== RESUMEN METADATA CHECK ===")
+print("=== RESUMEN METADATA CHECK ===")
 print(f"Tiempo: {elapsed/60:.1f} min")
 print(f"Procesadas: {stats['total']} (skipped: {stats['skipped']})")
 print(f"Con Street View: {stats['sv_ok']} ({stats['sv_ok']/max(total_checked,1)*100:.1f}%)")
 print(f"Sin Street View: {stats['sv_no']} ({stats['sv_no']/max(total_checked,1)*100:.1f}%)")
 print(f"Errores: {stats['errors']}")
-print(f"Coste: $0.00 (metadata es gratis)")
+print("Coste: $0.00 (metadata es gratis)")

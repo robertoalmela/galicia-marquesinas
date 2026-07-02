@@ -13,10 +13,7 @@ Cost: $0 images (free credit) + $0 AI (local Ollama)
 import json
 import urllib.request
 import os
-import time
-import subprocess
 from datetime import datetime
-from concurrent.futures import ThreadPoolExecutor
 
 from config_local import API_KEY
 BASE_DIR = "/home/roberto/Desktop/GitHub/00-active/galicia-marquesinas"
@@ -90,7 +87,7 @@ def download_sv(lat, lon, heading, out_path):
         req = urllib.request.Request(url, headers={"User-Agent": "MarquesinasGalicia/1.0"})
         with urllib.request.urlopen(req, timeout=15) as resp:
             return resp.read()
-    except:
+    except Exception:
         return None
 
 # Process first 100 stops as pilot
@@ -98,7 +95,7 @@ TOTAL = 100
 
 # Find stops with SV coverage
 sv_stops = [(i, f) for i, f in enumerate(gtfs['features']) 
-            if f['properties'].get('street_view_coverage') == True
+            if f['properties'].get('street_view_coverage') is True
             or f['properties'].get('sv_image')]
 
 # Filter: only stops that already have single-heading image but no 4dir
@@ -200,14 +197,14 @@ print(f"=== CLASSIFICATION RESULTS ({TOTAL} stops) ===")
 print(f"Time: {elapsed/60:.1f} min")
 print(f"Classified: {stats['classified']}")
 print(f"Images downloaded: {stats['downloaded']}")
-print(f"")
-print(f"Classification breakdown:")
+print("")
+print("Classification breakdown:")
 for c in CLASSIFICATIONS:
     n = class_counts.get(c, 0)
     pct = n / TOTAL * 100 if TOTAL else 0
     bar = '█' * int(pct / 2)
     print(f"  {c:20s}: {n:3d} ({pct:5.1f}%) {bar}")
-print(f"")
+print("")
 print(f"Cost images: ${stats['cost_imgs']:.2f} (real: $0)")
-print(f"Cost AI: $0 (local Ollama)")
-print(f"Total cost: $0.00")
+print("Cost AI: $0 (local Ollama)")
+print("Total cost: $0.00")

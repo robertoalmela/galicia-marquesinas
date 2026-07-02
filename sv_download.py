@@ -9,7 +9,6 @@ import json
 import urllib.request
 import time
 import os
-import sys
 from datetime import datetime
 
 from config_local import API_KEY
@@ -33,7 +32,7 @@ for i, feat in enumerate(gtfs['features']):
         unverified.append((i, feat))
 
 print(f"Paradas sin validar OSM: {len(unverified)}")
-print(f"Procesando: primeras 5.000")
+print("Procesando: primeras 5.000")
 
 # Take first 5000
 batch = unverified[:5000]
@@ -114,7 +113,7 @@ for idx, (i, feat) in enumerate(batch):
         pano_id = meta.get('pano_id', '')
         date = meta.get('date', '')
         
-    except Exception as e:
+    except Exception:
         stats['errors'] += 1
         stats['total'] += 1
         continue
@@ -148,7 +147,7 @@ for idx, (i, feat) in enumerate(batch):
         
         progress['completed'].append(stop_id)
         
-    except Exception as e:
+    except Exception:
         stats['download_fail'] += 1
         progress['failed'].append(stop_id)
     
@@ -185,7 +184,7 @@ total_cost = stats['cost_metadata'] + stats['cost_images']
 free_credit_remaining = 200 - total_cost
 
 print(f"\n{'='*60}")
-print(f"=== RESUMEN FINAL (5.000 paradas) ===")
+print("=== RESUMEN FINAL (5.000 paradas) ===")
 print(f"Tiempo: {elapsed/60:.1f} min")
 print(f"Procesadas: {stats['total']}")
 print(f"Con Street View: {stats['sv_ok']} ({stats['sv_ok']/stats['total']*100:.1f}%)")
@@ -193,25 +192,25 @@ print(f"Sin Street View: {stats['sv_no']} ({stats['sv_no']/stats['total']*100:.1
 print(f"Imágenes descargadas: {stats['downloaded']}")
 print(f"Imágenes fallidas: {stats['download_fail']}")
 print(f"Errores API: {stats['errors']}")
-print(f"")
-print(f"--- COSTE ---")
+print("")
+print("--- COSTE ---")
 print(f"Metadata: ${stats['cost_metadata']:.2f}")
 print(f"Imágenes: ${stats['cost_images']:.2f}")
 print(f"Total: ${total_cost:.2f}")
 print(f"Crédito restante: ${free_credit_remaining:.2f}")
-print(f"Coste real: $0.00 (todo dentro del crédito gratuito)")
-print(f"")
-print(f"--- PROYECCIÓN 22.706 paradas ---")
+print("Coste real: $0.00 (todo dentro del crédito gratuito)")
+print("")
+print("--- PROYECCIÓN 22.706 paradas ---")
 factor = 22706 / 5000
 print(f"Metadata: ${stats['cost_metadata']*factor:.2f}")
 print(f"Imágenes: ${stats['cost_images']*factor:.2f}")
 print(f"Total: ${total_cost*factor:.2f}")
-print(f"Coste real: $0.00")
+print("Coste real: $0.00")
 
 # Check disk usage
 du_result = os.popen(f"du -sh {IMG_DIR}").read().strip()
 print(f"\nEspacio en disco: {du_result}")
-print(f"Imágenes por provincia:")
+print("Imágenes por provincia:")
 for prov in ["A Coruña", "Pontevedra", "Lugo", "Ourense"]:
     prov_dir = os.path.join(IMG_DIR, prov)
     count = len([f for f in os.listdir(prov_dir) if f.endswith('.jpg')]) if os.path.exists(prov_dir) else 0

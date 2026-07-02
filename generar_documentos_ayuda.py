@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
 """Genera los 3 documentos de la ayuda Promoarte 2026 Línea A"""
 from docx import Document
-from docx.shared import Pt, Cm, Inches
-from docx.enum.text import WD_ALIGN_PARAGRAPH
-import os
+from docx.shared import Pt
 
 BASE = "/home/roberto/Desktop/GitHub/00-active/galicia-marquesinas/ayuda-templates"
 OUT = "/home/roberto/Desktop/GitHub/00-active/galicia-marquesinas"
